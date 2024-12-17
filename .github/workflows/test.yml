@@ -22,6 +22,11 @@ jobs:
         with:
           version: nightly
 
+      - name: Run Forge soldeer install
+        run: |
+          forge soldeer install
+        id: build
+
       - name: Run Forge build
         run: |
           forge --version
