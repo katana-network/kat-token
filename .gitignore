@@ -14,3 +14,4 @@ docs/
 .env
 
 dependencies/
+node_modules/
