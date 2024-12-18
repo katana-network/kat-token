@@ -9,30 +9,30 @@ contract DeployScript is Script {
     string constant tokenName = "KAT Token";
     string constant tokenSymbol = "KAT";
 
+    bytes32 constant salt = "funny text";
+    address dummyInflationAdmin = makeAddr("inflation_admin");
+    address dummyInflationBen = makeAddr("inflation_ben");
+    address dummyMerkleMinter = makeAddr("inflation_admin");
+    address dummyUnlocker = makeAddr("unlocker");
+
+    uint256 dummyUnlockTime = block.timestamp + 9 days;
+
     function setUp() public {}
 
     function run() public {
-        vm.startBroadcast();
-        (KatToken katToken, MerkleMinter merkleMinter) = deploy(
-            makeAddr("admin"),
-            makeAddr("inflation_ben"),
-            makeAddr("unlocker"),
-            makeAddr("rootSetter"),
-            block.timestamp + 9 days
-        );
-        vm.stopBroadcast();
+        (KatToken katToken, MerkleMinter merkleMinter) =
+            deploy(dummyInflationAdmin, dummyInflationBen, dummyUnlocker, dummyMerkleMinter, dummyUnlockTime);
         console.log("KAT Token address: ", address(katToken));
         console.log("MerkleMinter address: ", address(merkleMinter));
     }
 
     function deploy(
-        address _admin,
+        address _inflation_admin,
         address _inflation_ben,
         address _unlocker,
         address _rootSetter,
         uint256 _unlockDelay
     ) public returns (KatToken katToken, MerkleMinter merkleMinter) {
-        bytes32 salt = "funny text";
         address _merkleMinter = vm.computeCreate2Address(
             salt,
             keccak256(bytes.concat(type(MerkleMinter).creationCode, abi.encode(_unlockDelay, _unlocker, _rootSetter)))
@@ -42,12 +42,16 @@ contract DeployScript is Script {
         // address inflation_admin,
         // address inflation_beneficiary,
         // address _merkleMinter
-        katToken = new KatToken{salt: salt}("KatToken", "KAT", _admin, _inflation_ben, _merkleMinter);
+        katToken = new KatToken{salt: salt}("KatToken", "KAT", _inflation_admin, _inflation_ben, _merkleMinter);
         // uint256 _unlockTime
         // address _unlocker
         // address _rootSetter
         merkleMinter = new MerkleMinter{salt: salt}(_unlockDelay, _unlocker, _rootSetter);
 
         assert(address(merkleMinter) == _merkleMinter);
+    }
+
+    function deployDummyToken() public returns (KatToken katToken) {
+        return new KatToken{salt: salt}("KatToken", "KAT", dummyInflationAdmin, dummyInflationBen, dummyMerkleMinter);
     }
 }
