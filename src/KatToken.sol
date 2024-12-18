@@ -53,13 +53,13 @@ contract KatToken is ERC20Permit {
     }
 
     function changeRole(address newOwner, bytes32 role) public {
-        // Use 0xDead to disbale role, careful, this can't be reverted
+        // Use 0xDead to disable role, careful, this can't be reverted
         require(newOwner != address(0x00), "Missing new owner.");
         require(msg.sender == roles[role], "Not role owner.");
         roles[role] = newOwner;
     }
 
-    // No seperate mint function, just mintTo self if needed
+    // No separate mint function, just mintTo self if needed
     function mintTo(address to, uint256 amount) public {
         require(mintCapacity[msg.sender] >= amount, "Not enough mint capacity.");
         mintCapacity[msg.sender] -= amount;
@@ -68,11 +68,7 @@ contract KatToken is ERC20Permit {
 
     // calc cap per the rule
     function cap() public view returns (uint256) {
-        if (block.timestamp > lastMintCapacityIncrease) {
-            return distributedSupplyCap + _calcInflation();
-        } else {
-            return distributedSupplyCap;
-        }
+        return distributedSupplyCap + _calcInflation();
     }
 
     function changeInflation(uint256 value) public {
@@ -84,6 +80,9 @@ contract KatToken is ERC20Permit {
 
     function _calcInflation() internal view returns (uint256) {
         //calc total increase
+        if (lastMintCapacityIncrease > block.timestamp) {
+            return 0;
+        }
         uint256 timeElapsed = block.timestamp - lastMintCapacityIncrease;
         uint256 supplyFactor = PowUtil.exp2((inflationFactor * timeElapsed) / 365 days);
         uint256 newCap = (supplyFactor * distributedSupplyCap) / 1e18;
@@ -97,7 +96,9 @@ contract KatToken is ERC20Permit {
         // give increase to INFLATION_BENEFICIARY
         mintCapacity[roles[INFLATION_BENEFICIARY]] += inflation;
         // increase distributedSupplyCap
-        lastMintCapacityIncrease = block.timestamp;
+        if (block.timestamp > lastMintCapacityIncrease) {
+            lastMintCapacityIncrease = block.timestamp;
+        }
     }
 
     function distributeMintCapacity(address to, uint256 amount) public {
