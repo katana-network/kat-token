@@ -43,11 +43,9 @@ contract MerkleMinter {
     }
 
     function claimKatToken(bytes32[] memory proof, uint256 amount, address receiver) public unlocked {
-        bytes32 leaf = keccak256(abi.encode(amount, receiver));
+        bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(receiver, amount))));
         require(!nullifier[leaf], "Already claimed.");
         require(MerkleProof.verify(proof, root, leaf), "Proof failed");
         katToken.mintTo(receiver, amount);
     }
-
-    // using https://github.com/Uniswap/merkle-distributor
 }
