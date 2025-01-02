@@ -21,12 +21,6 @@ contract MerkleMinter {
         rootSetter = _rootSetter;
     }
 
-    modifier unlocked() {
-        // do a fail fast check on time first, then storage slot, this keeps claim cheap after the time unlock
-        require(((block.timestamp > unlockTime) || !locked), "Minter locked.");
-        _;
-    }
-
     // Set the token and the merkle root once
     function init(bytes32 _root, address _katToken) public {
         require(msg.sender == rootSetter, "Not rootSetter.");
@@ -42,10 +36,13 @@ contract MerkleMinter {
         unlocker = address(0x00);
     }
 
-    function claimKatToken(bytes32[] memory proof, uint256 amount, address receiver) public unlocked {
+    function claimKatToken(bytes32[] memory proof, uint256 amount, address receiver) public {
+        // do a fail fast check on time first, then storage slot, this keeps claim cheap after the time unlock
+        require(((block.timestamp > unlockTime) || !locked), "Minter locked.");
         bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(receiver, amount))));
         require(!nullifier[leaf], "Already claimed.");
         require(MerkleProof.verify(proof, root, leaf), "Proof failed");
+        nullifier[leaf] = true;
         katToken.mintTo(receiver, amount);
     }
 }

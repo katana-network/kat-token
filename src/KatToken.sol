@@ -12,7 +12,7 @@ contract KatToken is ERC20Permit {
     // Initial receiver of the inflated minting capacity, can distribute it away as needed
     bytes32 public constant INFLATION_BENEFICIARY = keccak256("INFLATION_BENEFICIARY");
 
-    mapping(bytes32 => address) roles;
+    mapping(bytes32 => address) public roles;
 
     // cap after the last settlement
     uint256 distributedSupplyCap;
@@ -24,7 +24,7 @@ contract KatToken is ERC20Permit {
     uint256 public constant MAX_INFLATION = 0.04264433740849369e18; // log2(1.03)
 
     address public immutable merkleMinter;
-    mapping(address => uint256) mintCapacity;
+    mapping(address => uint256) public mintCapacity;
 
     // all these calcs ignore leap seconds or might be otherwise inaccurate, we assume this is good enough
     constructor(
