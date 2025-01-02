@@ -14,10 +14,8 @@ contract DeployScript is Script {
     address dummyInflationBen = makeAddr("inflation_ben");
     address dummyMerkleMinter = makeAddr("inflation_admin");
     address dummyUnlocker = makeAddr("unlocker");
-
+    address dummyRootSetter = makeAddr("rootsetter");
     uint256 dummyUnlockTime = block.timestamp + 9 days;
-
-    function setUp() public {}
 
     function run() public {
         (KatToken katToken, MerkleMinter merkleMinter) =
@@ -53,5 +51,9 @@ contract DeployScript is Script {
 
     function deployDummyToken() public returns (KatToken katToken) {
         return new KatToken{salt: salt}("KatToken", "KAT", dummyInflationAdmin, dummyInflationBen, dummyMerkleMinter);
+    }
+
+    function deployDummyMerkleMinter() public returns (MerkleMinter merkleMinter) {
+        return new MerkleMinter{salt: salt}(dummyUnlockTime, dummyUnlocker, dummyRootSetter);
     }
 }
