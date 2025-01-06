@@ -5,8 +5,11 @@ libs = ["dependencies"]
 
 # Required so tests use correct deployment
 always_use_create_2_factory=true
+ffi = true
+
+[fmt]
+multiline_func_header = "params_first_multi"
 
 [dependencies]
 "@openzeppelin-contracts" = "5.1.0"
 forge-std = "1.9.4"
-# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
