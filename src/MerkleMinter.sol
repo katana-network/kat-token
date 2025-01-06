@@ -21,7 +21,11 @@ contract MerkleMinter {
         rootSetter = _rootSetter;
     }
 
-    // Set the token and the merkle root once
+    /**
+     * Set the token and the merkle root once
+     * @param _root Merkleroot to the airdrop receivers merkle tree
+     * @param _katToken Address of the KatToken to be airdropped
+     */
     function init(bytes32 _root, address _katToken) public {
         require(msg.sender == rootSetter, "Not rootSetter.");
         root = _root;
@@ -29,13 +33,21 @@ contract MerkleMinter {
         rootSetter = address(0x00);
     }
 
-    // unlock early
+    /**
+     * Unlocks the claim function early
+     */
     function unlock() public {
         require(msg.sender == unlocker, "Not unlocker.");
         locked = false;
         unlocker = address(0x00);
     }
 
+    /**
+     * Claim function that checks if a leaf is inside the root using a proof and mints the expected token amount to the receiver
+     * @param proof MerkleProof from the leaf to be claimed to the root
+     * @param amount Token amount for this leaf
+     * @param receiver Address of the token receiver for this leaf
+     */
     function claimKatToken(bytes32[] memory proof, uint256 amount, address receiver) public {
         // do a fail fast check on time first, then storage slot, this keeps claim cheap after the time unlock
         require(((block.timestamp > unlockTime) || !locked), "Minter locked.");
