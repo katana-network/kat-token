@@ -8,7 +8,6 @@ import "../script/Deploy.s.sol";
 contract MerkleMinterTest is Test, DeployScript {
     MerkleMinter merkleMinter;
     address alice = makeAddr("alice");
-    address beatrice = makeAddr("beatrice");
     address dummyToken = makeAddr("dummyToken");
 
     bytes32[] proof1 = [bytes32(0xb92c48e9d7abe27fd8dfd6b5dfdbfb1c9a463f80c712b66f3a5180a090cccafc)];
@@ -88,11 +87,5 @@ contract MerkleMinterTest is Test, DeployScript {
         merkleMinter.claimKatToken(proof2, amount2, claimer2);
         vm.expectRevert("Already claimed.");
         merkleMinter.claimKatToken(proof2, amount2, claimer2);
-    }
-
-    function test_mint_inflation() public {
-        // do some inflation
-        // delegate the inflation to soemone
-        // have them mint the inflation
     }
 }
