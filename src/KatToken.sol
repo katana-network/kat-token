@@ -8,11 +8,9 @@ contract KatToken is ERC20Permit {
     // role management
     // minting is not a role, but intrinsic
     // This role can set the inflation to values between 0% and 3% per year
-    bytes32 public constant INFLATION_ADMIN = keccak256("INFLATION_ADMIN");
+    address public inflationAdmin;
     // Initial receiver of the inflated minting capacity, can distribute it away as needed
-    bytes32 public constant INFLATION_BENEFICIARY = keccak256("INFLATION_BENEFICIARY");
-
-    mapping(bytes32 => address) public roles;
+    address public inflationBeneficiary;
 
     // cap after the last settlement
     uint256 distributedSupplyCap;
@@ -28,23 +26,22 @@ contract KatToken is ERC20Permit {
 
     // all these calcs ignore leap seconds or might be otherwise inaccurate, we assume this is good enough
     constructor(
-        string memory name,
-        string memory symbol,
-        address inflation_admin,
-        address inflation_beneficiary,
+        string memory _name,
+        string memory _symbol,
+        address _inflationAdmin,
+        address _inflationBeneficiary,
         address _merkleMinter
-    ) ERC20(name, symbol) ERC20Permit(name) {
+    ) ERC20(_name, _symbol) ERC20Permit(_name) {
         // Initial cap is 10 billion
         uint256 initialDistribution = 10_000_000_000;
-        // Give all to this contract so we can distribute afterwards
         mintCapacity[_merkleMinter] = initialDistribution;
         distributedSupplyCap = initialDistribution;
         // set to start of supply increase, 4 years after deployment
         lastMintCapacityIncrease = block.timestamp + 4 * 365 days + 1 days;
 
         // Assign roles
-        roles[INFLATION_ADMIN] = inflation_admin;
-        roles[INFLATION_BENEFICIARY] = inflation_beneficiary;
+        inflationAdmin = _inflationAdmin;
+        inflationBeneficiary = inflationBeneficiary;
 
         // Set initial inflation after 4 years
         inflationFactor = 0.02856915219677089e18; // log2(1.02)
@@ -53,16 +50,27 @@ contract KatToken is ERC20Permit {
     }
 
     /**
-     * Function to change the current owner of a role
+     * Function to change the current owner of the inflationAdmin
      * @dev if we just have two roles, maybe unique functions would make sense
      * @param newOwner address that will hold the role
-     * @param role role that gets a new owner
      */
-    function changeRole(address newOwner, bytes32 role) public {
+    function changeInflationAdmin(address newOwner) public {
         // Use 0xDead to disable role, careful, this can't be reverted
         require(newOwner != address(0x00), "Missing new owner.");
-        require(msg.sender == roles[role], "Not role owner.");
-        roles[role] = newOwner;
+        require(msg.sender == inflationAdmin, "Not role owner.");
+        inflationAdmin = newOwner;
+    }
+
+    /**
+     * Function to change the current owner of the inflationBeneficiary
+     * @dev if we just have two roles, maybe unique functions would make sense
+     * @param newOwner address that will hold the role
+     */
+    function changeInflationBeneficiary(address newOwner) public {
+        // Use 0xDead to disable role, careful, this can't be reverted
+        require(newOwner != address(0x00), "Missing new owner.");
+        require(msg.sender == inflationBeneficiary, "Not role owner.");
+        inflationBeneficiary = newOwner;
     }
 
     /**
@@ -92,7 +100,7 @@ contract KatToken is ERC20Permit {
      * @param value The new inflation factor
      */
     function changeInflation(uint256 value) public {
-        require(msg.sender == roles[INFLATION_ADMIN], "Not allowed.");
+        require(msg.sender == inflationAdmin, "Not allowed.");
         require(value < MAX_INFLATION, "Inflation to large.");
         distributeInflation();
         inflationFactor = value;
@@ -119,7 +127,7 @@ contract KatToken is ERC20Permit {
         uint256 inflation = _calcInflation();
         distributedSupplyCap += inflation;
         // give increase to INFLATION_BENEFICIARY
-        mintCapacity[roles[INFLATION_BENEFICIARY]] += inflation;
+        mintCapacity[inflationBeneficiary] += inflation;
         // increase distributedSupplyCap
         if (block.timestamp > lastMintCapacityIncrease) {
             lastMintCapacityIncrease = block.timestamp;
