@@ -109,12 +109,6 @@ contract InflationTest is Test, DeployScript {
         assertEq(token.mintCapacity(dummyMerkleMinter), 10_000_000_000);
     }
 
-    function test_inflation_fuzz(uint256 timePassed, uint256 lastDistribution, uint256 lastAmount, uint256 inflationFactor) public {
-        // set time and amount now to values
-        // set inflation factor
-        // calc and compare amount with calc.js
-    }
-
     function warpYears(uint256 amount) internal {
         vm.warp(365 days * amount + (amount / 4) * 1 days);
     }

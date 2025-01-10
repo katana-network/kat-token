@@ -8,41 +8,44 @@ import "../script/Deploy.s.sol";
 contract KatTokenTest is Test, DeployScript {
     KatToken token;
     address alice = makeAddr("alice");
-    address beatrice = makeAddr("beatrice");
 
     function setUp() public {
         token = deployDummyToken();
     }
 
-    function test_change_role() public {
-        bytes32 role = token.INFLATION_ADMIN();
+    function test_change_inflation_admin() public {
         vm.prank(dummyInflationAdmin);
-        token.changeRole(alice, role);
-        assertEq(token.roles(role), alice);
+        token.changeInflationAdmin(alice);
+        assertEq(token.inflationAdmin(), alice);
     }
 
-    function test_change_role_no_permission() public {
-        bytes32 role = token.INFLATION_ADMIN();
+    function test_change_inflation_admin_permission() public {
         vm.prank(alice);
         vm.expectRevert("Not role owner.");
-        token.changeRole(alice, role);
+        token.changeInflationAdmin(alice);
     }
 
-    function test_change_role_no_address() public {
-        bytes32 role = token.INFLATION_ADMIN();
+    function test_change_inflation_admin_no_address() public {
         vm.prank(alice);
         vm.expectRevert("Missing new owner.");
-        token.changeRole(address(0), role);
+        token.changeInflationBeneficiary(address(0));
     }
 
-    function test_change_role_no_role() public {
-        bytes32 role = keccak256("empty_role");
+    function test_change_inflation_beneficiary() public {
+        vm.prank(dummyInflationBen);
+        token.changeInflationBeneficiary(alice);
+        assertEq(token.inflationBeneficiary(), alice);
+    }
+
+    function test_change_inflation_beneficiary_no_permission() public {
         vm.prank(alice);
         vm.expectRevert("Not role owner.");
-        token.changeRole(alice, role);
+        token.changeInflationBeneficiary(alice);
+    }
 
-        vm.prank(dummyInflationAdmin);
-        vm.expectRevert("Not role owner.");
-        token.changeRole(alice, role);
+    function test_change_inflation_beneficiary_no_address() public {
+        vm.prank(alice);
+        vm.expectRevert("Missing new owner.");
+        token.changeInflationBeneficiary(address(0));
     }
 }
