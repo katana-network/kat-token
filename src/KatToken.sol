@@ -41,7 +41,7 @@ contract KatToken is ERC20Permit {
 
         // Assign roles
         inflationAdmin = _inflationAdmin;
-        inflationBeneficiary = inflationBeneficiary;
+        inflationBeneficiary = _inflationBeneficiary;
 
         // Set initial inflation after 4 years
         inflationFactor = 0.02856915219677089e18; // log2(1.02)
