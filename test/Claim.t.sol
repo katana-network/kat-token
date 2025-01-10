@@ -13,6 +13,7 @@ contract ClaimTest is Test, DeployScript {
 
     FFIHelper ffiHelper;
 
+    // Uses the testTree.json in test/utils
     bytes32 root = 0x853ba80cd07a4468b83328d1742dcc7732b3df989c78221dbfaa3c01656bdeca;
 
     function setUp() public {

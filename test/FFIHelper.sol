@@ -34,18 +34,4 @@ contract FFIHelper is Test {
         ffiInputs[2] = vm.toString(index); // leaf index
         return abi.decode(vm.ffi(ffiInputs), (address, uint256));
     }
-
-    function gen() public {
-        console.log("[");
-        for (uint256 i = 0; i < 2000; i++) {
-            //0x240A3d2eBc8AAf892347f73070F668cD556C7a8b 52064
-            // ["0x1111111111111111111111111111111111111111", "5000000000000000000"],
-            console.log('["');
-            console.log(vm.randomAddress());
-            console.log('" ,"');
-            console.log(vm.randomUint(0, 100000));
-            console.log('"],');
-        }
-        console.log("]");
-    }
 }

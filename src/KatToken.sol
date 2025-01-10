@@ -5,8 +5,6 @@ import {ERC20Permit, ERC20} from "dependencies/@openzeppelin-contracts-5.1.0/tok
 import {PowUtil} from "./Powutil.sol";
 
 contract KatToken is ERC20Permit {
-    // role management
-    // minting is not a role, but intrinsic
     // This role can set the inflation to values between 0% and 3% per year
     address public inflationAdmin;
     // Initial receiver of the inflated minting capacity, can distribute it away as needed
@@ -21,10 +19,11 @@ contract KatToken is ERC20Permit {
     // Maximum configurable inflation (3% annually)
     uint256 public constant MAX_INFLATION = 0.04264433740849369e18; // log2(1.03)
 
+    // Address of the merkle minter, that holds all initial mint capacity
     address public immutable merkleMinter;
+    // Mint capacity distributed after the inflation starts
     mapping(address => uint256) public mintCapacity;
 
-    // all these calcs ignore leap seconds or might be otherwise inaccurate, we assume this is good enough
     constructor(
         string memory _name,
         string memory _symbol,
@@ -36,7 +35,9 @@ contract KatToken is ERC20Permit {
         uint256 initialDistribution = 10_000_000_000;
         mintCapacity[_merkleMinter] = initialDistribution;
         distributedSupplyCap = initialDistribution;
+
         // set to start of supply increase, 4 years after deployment
+        // all these calcs ignore leap seconds or might be otherwise slightly inaccurate, we assume this is good enough
         lastMintCapacityIncrease = block.timestamp + 4 * 365 days + 1 days;
 
         // Assign roles
