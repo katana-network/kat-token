@@ -7,7 +7,7 @@ import "../src/KatToken.sol";
 import "../script/Deploy.s.sol";
 import "./FFIHelper.sol";
 
-contract ClaimTest is Test, DeployScript {
+contract ClaimTestSimple is Test, DeployScript {
     MerkleMinter merkleMinter;
     KatToken katToken;
 
@@ -45,5 +45,55 @@ contract ClaimTest is Test, DeployScript {
         assertEq(katToken.balanceOf(addr), 0);
         merkleMinter.claimKatToken(proof, val, addr);
         assertEq(katToken.balanceOf(addr), val);
+    }
+}
+
+contract ClaimTestMulti is Test, DeployScript {
+    MerkleMinter merkleMinter;
+    KatToken katToken;
+
+    FFIHelper ffiHelper;
+
+    address alice = makeAddr("alice");
+    uint256 totalReceived;
+
+    // Uses the testTree.json in test/utils
+    bytes32 root = 0x853ba80cd07a4468b83328d1742dcc7732b3df989c78221dbfaa3c01656bdeca;
+
+    function setUp() public {
+        ffiHelper = new FFIHelper();
+        (katToken, merkleMinter) =
+            deploy(dummyInflationAdmin, dummyInflationBen, dummyUnlocker, dummyRootSetter, dummyUnlockTime);
+
+        vm.prank(dummyRootSetter);
+        merkleMinter.init(root, address(katToken));
+        vm.prank(dummyUnlocker);
+        merkleMinter.unlock();
+    }
+
+    /// forge-config: default.fuzz.runs = 10
+    function test_MultiClaim_Fuzz(uint16[10] memory indexes) public {
+        for (uint256 i = 0; i < indexes.length; i++) {
+            uint16 index = indexes[i];
+            vm.assume(index < 2000);
+
+            bytes32[] memory proof = ffiHelper.getProof(index);
+            (address addr, uint256 val) = ffiHelper.getLeaf(index);
+            bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(addr, val))));
+
+            if (merkleMinter.nullifier(leaf)) {
+                vm.expectRevert("Already claimed.");
+                merkleMinter.claimKatToken(proof, val, addr);
+            } else {
+                assertEq(katToken.balanceOf(addr), 0);
+                merkleMinter.claimKatToken(proof, val, addr);
+                assertEq(katToken.balanceOf(addr), val);
+                totalReceived += val;
+                vm.prank(addr);
+                katToken.transfer(alice, val);
+                console.log(totalReceived);
+                assertEq(totalReceived, katToken.balanceOf(alice));
+            }
+        }
     }
 }
