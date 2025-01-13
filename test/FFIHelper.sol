@@ -4,20 +4,6 @@ pragma solidity 0.8.28;
 import "dependencies/forge-std-1.9.4/src/Test.sol";
 
 contract FFIHelper is Test {
-    function calcInflation(
-        uint256 timeElapsedInSeconds,
-        uint256 lastSupply,
-        uint256 inflationRatePerYear
-    ) public returns (uint256) {
-        string[] memory ffiInputs = new string[](5);
-        ffiInputs[0] = "node";
-        ffiInputs[1] = "test/utils/calcInflation.js";
-        ffiInputs[2] = vm.toString(timeElapsedInSeconds); // time since last realization in secondss
-        ffiInputs[3] = vm.toString(lastSupply); // supply at the last realization
-        ffiInputs[4] = string.concat("1.0", vm.toString(inflationRatePerYear)); // example: 2
-        return abi.decode(vm.ffi(ffiInputs), (uint256));
-    }
-
     function getProof(uint256 index) public returns (bytes32[] memory) {
         string[] memory ffiInputs = new string[](3);
         ffiInputs[0] = "node";

@@ -6,7 +6,7 @@ Native token of the Katana Network Chain.
 
 - standard ERC20
 - permit
-- MerkleMinter to distribute inital supply
+- MerkleMinter to distribute initial supply
 - configurable inflation that starts 4 years after deployment
 - locked for first 9 months, with early unlock mechanism
 - immutable
@@ -16,15 +16,18 @@ Native token of the Katana Network Chain.
 Run:  
 `forge soldeer install`
 
+And:
+`npm i`
+
 Next:  
 `forge test`
 
 ### Deploy
 
-1. Set a private key in `.env`
+1. Set a private key and other data in `.env`
 2. Set a rpc endpoint in `foundry.toml`
 3. Set values in `script/Deploy.s.sol`
-4. Run `forge script script/Deploy.s.sol`
+4. Run `forge script script/Deploy.s.sol --rpc-url polygon_mainnet --broadcast --verify`
 
 ### Additional Info
 
