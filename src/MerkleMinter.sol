@@ -10,7 +10,7 @@ contract MerkleMinter {
 
     KatToken public katToken;
 
-    uint256 public unlockTime;
+    uint256 immutable public unlockTime;
     bool public locked = true;
     address public unlocker;
     address public rootSetter;
