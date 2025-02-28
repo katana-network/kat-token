@@ -1,12 +1,23 @@
+import "./exp2-summary.spec";
+
+methods {
+    function inflationAdmin() external returns (address) envfree;
+    function inflationBeneficiary() external returns (address) envfree;
+    function inflationFactor() external returns (uint256) envfree;
+    function MAX_INFLATION() external returns (uint256) envfree;
+    function merkleMinter() external returns (address) envfree;
+    function mintCapacity(address) external returns (uint256) envfree;
+}
+
 rule onlyAdminCanChangeAdmin() {
     env e;
-    address oldOwner = inflationAdmin(e);
+    address oldOwner = inflationAdmin();
     address newOwner;
 
     changeInflationAdmin(e, newOwner);
 
     assert(e.msg.sender == oldOwner);
-    assert(inflationAdmin(e) == newOwner);
+    assert(inflationAdmin() == newOwner);
 }
 
 rule canOnlySendAvailableMintCapacity() {
@@ -14,15 +25,30 @@ rule canOnlySendAvailableMintCapacity() {
     address to;
     uint256 amount;
 
-    uint256 ownCapacityBefore = mintCapacity(e, e.msg.sender);
-    uint256 toCapacityBefore = mintCapacity(e, to);
+    uint256 ownCapacityBefore = mintCapacity(e.msg.sender);
+    uint256 toCapacityBefore = mintCapacity(to);
 
     distributeMintCapacity(e, to, amount);
 
 
-    uint256 ownCapacityAfter = mintCapacity(e, e.msg.sender);
-    uint256 toCapacityAfter = mintCapacity(e, to);
+    uint256 ownCapacityAfter = mintCapacity(e.msg.sender);
+    uint256 toCapacityAfter = mintCapacity(to);
 
     assert(ownCapacityBefore >= amount);
     assert(ownCapacityBefore + toCapacityBefore == ownCapacityAfter + toCapacityAfter);
+}
+
+rule nonTrivialDistributeInflation() {
+    env e;
+
+    // enforce non-trivial inflation
+    require(inflationFactor() > MAX_INFLATION() / 2);
+    require(inflationFactor() < MAX_INFLATION());
+
+    uint256 capacityBefore = mintCapacity(inflationBeneficiary());
+
+    distributeInflation(e);
+
+    uint256 capacityAfter = mintCapacity(inflationBeneficiary());
+    satisfy(capacityAfter > capacityBefore);
 }
