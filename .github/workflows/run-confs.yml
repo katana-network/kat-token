@@ -21,7 +21,10 @@ jobs:
         with:
           submodules: recursive
 
-      - name: install
+      - name: install foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: install dependencies
         run: |
           forge soldeer install
           npm i
