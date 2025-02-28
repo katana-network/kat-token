@@ -27,3 +27,22 @@ rule exp2Monotonicity() {
     // weak monotonicity
     assert((x < y) => (exp2(x) <= exp2(y)));
 }
+
+function lowerBound(mathint x, mathint res) {
+    mathint e = exp2(assert_uint256(x));
+    assert(10 * e >= 9*res);
+}
+
+rule exp2LowerBound() {
+    lowerBound(0*ONE18(), ONE18());
+    lowerBound(1*ONE18(), 2*ONE18());
+    lowerBound(2*ONE18(), 4*ONE18());
+    lowerBound(3*ONE18(), 8*ONE18());
+    lowerBound(4*ONE18(), 16*ONE18());
+    lowerBound(5*ONE18(), 32*ONE18());
+    lowerBound(6*ONE18(), 64*ONE18());
+    lowerBound(7*ONE18(), 128*ONE18());
+    lowerBound(8*ONE18(), 256*ONE18());
+    lowerBound(9*ONE18(), 512*ONE18());
+    lowerBound(10*ONE18(), 1024*ONE18());
+}
