@@ -1,5 +1,7 @@
 import "./exp2-summary.spec";
 
+// Does some sanity checks on the exp2 summarization.
+
 methods {
     function exp2(uint256 x) external returns (uint256) envfree;
 }

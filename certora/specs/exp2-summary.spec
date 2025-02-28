@@ -1,6 +1,7 @@
+// Provides a summary for PowUtil.exp2 based on a ghost with some axioms.
+
 methods {
     function PowUtil.exp2(uint256 x) internal returns (uint256) => cvlExp2(x);
-
 }
 
 definition ONE18() returns uint256 = 1000000000000000000;
