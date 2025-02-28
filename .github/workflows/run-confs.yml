@@ -1,0 +1,37 @@
+name: test
+
+on: pull_request
+
+env:
+  FOUNDRY_PROFILE: ci
+  CONFIGS: |
+    certora/confs/sanity/sanity-KatToken.conf
+    certora/confs/sanity/sanity-MerkleMinter.conf
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      statuses: write
+      pull-requests: write
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: install
+        run: |
+          forge soldeer install
+          npm i
+
+      - name: run configs
+        uses: Certora/certora-run-action@v1
+        with:
+          configurations: ${{ env.CONFIGS }}
+          solc-versions: 0.8.28
+          solc-remove-version-prefix: "0."
+          certora-key: ${{ secrets.CERTORAKEY }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
