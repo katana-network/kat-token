@@ -5,8 +5,10 @@ on: pull_request
 env:
   FOUNDRY_PROFILE: ci
   CONFIGS: |
-    certora/confs/sanity/sanity-KatToken.conf
-    certora/confs/sanity/sanity-MerkleMinter.conf
+    certora/confs/KatToken-simple.conf
+    certora/confs/MerkleMinter-simple.conf
+    certora/confs/sanity-KatToken.conf
+    certora/confs/sanity-MerkleMinter.conf
 
 jobs:
   check:
