@@ -45,4 +45,15 @@ rule exp2LowerBound() {
     lowerBound(8*ONE18(), 256*ONE18());
     lowerBound(9*ONE18(), 512*ONE18());
     lowerBound(10*ONE18(), 1024*ONE18());
+
+    lowerBound(1*ONE18()/2,  ONE18()*   14142 / 10000);
+    lowerBound(3*ONE18()/2,  ONE18()*   28284 / 10000);
+    lowerBound(5*ONE18()/2,  ONE18()*   56569 / 10000);
+    lowerBound(7*ONE18()/2,  ONE18()*  113137 / 10000);
+    lowerBound(9*ONE18()/2,  ONE18()*  226274 / 10000);
+    lowerBound(11*ONE18()/2, ONE18()*  452548 / 10000);
+    lowerBound(13*ONE18()/2, ONE18()*  905097 / 10000);
+    lowerBound(15*ONE18()/2, ONE18()* 1810193 / 10000);
+    lowerBound(17*ONE18()/2, ONE18()* 3620387 / 10000);
+    lowerBound(19*ONE18()/2, ONE18()* 7240773 / 10000);
 }
