@@ -5,6 +5,7 @@ on: pull_request
 env:
   FOUNDRY_PROFILE: ci
   CONFIGS: |
+    certora/confs/exp2-check-summary.conf
     certora/confs/KatToken-simple.conf
     certora/confs/MerkleMinter-simple.conf
     certora/confs/sanity-KatToken.conf
