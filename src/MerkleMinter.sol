@@ -33,7 +33,7 @@ contract MerkleMinter {
         require(msg.sender == rootSetter, "Not rootSetter.");
         root = _root;
         katToken = KatToken(_katToken);
-        rootSetter = address(0x00);
+        rootSetter = address(0);
     }
 
     /**
@@ -42,7 +42,7 @@ contract MerkleMinter {
     function unlock() public {
         require(msg.sender == unlocker, "Not unlocker.");
         locked = false;
-        unlocker = address(0x00);
+        unlocker = address(0);
     }
 
     /**

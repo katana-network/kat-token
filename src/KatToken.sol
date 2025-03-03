@@ -57,7 +57,7 @@ contract KatToken is ERC20Permit {
      */
     function changeInflationAdmin(address newOwner) public {
         // Use 0xDead to disable role, careful, this can't be reverted
-        require(newOwner != address(0x00), "Missing new owner.");
+        require(newOwner != address(0), "Missing new owner.");
         require(msg.sender == inflationAdmin, "Not role owner.");
         inflationAdmin = newOwner;
     }
@@ -69,7 +69,7 @@ contract KatToken is ERC20Permit {
      */
     function changeInflationBeneficiary(address newOwner) public {
         // Use 0xDead to disable role, careful, this can't be reverted
-        require(newOwner != address(0x00), "Missing new owner.");
+        require(newOwner != address(0), "Missing new owner.");
         require(msg.sender == inflationBeneficiary, "Not role owner.");
         inflationBeneficiary = newOwner;
     }
@@ -141,7 +141,7 @@ contract KatToken is ERC20Permit {
      * @param amount Amount to be added as mint capacity
      */
     function distributeMintCapacity(address to, uint256 amount) public {
-        require(to != address(0x00), "Sending to 0x00");
+        require(to != address(0), "Sending to 0 address");
         require(mintCapacity[msg.sender] >= amount, "Not enough capacity.");
         mintCapacity[msg.sender] -= amount;
         mintCapacity[to] += amount;
