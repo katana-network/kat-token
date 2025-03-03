@@ -19,6 +19,10 @@ contract MerkleMinter {
     address public rootSetter;
 
     constructor(uint256 _unlockTime, address _unlocker, address _rootSetter) {
+        require(_unlockTime != 0);
+        require(_unlocker != address(0));
+        require(_rootSetter != address(0));
+
         unlockTime = _unlockTime;
         unlocker = _unlocker;
         rootSetter = _rootSetter;

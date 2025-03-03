@@ -31,8 +31,14 @@ contract KatToken is ERC20Permit {
         address _inflationBeneficiary,
         address _merkleMinter
     ) ERC20(_name, _symbol) ERC20Permit(_name) {
+        require(bytes(_name).length != 0);
+        require(bytes(_symbol).length != 0);
+        require(_inflationAdmin != address(0));
+        require(_inflationBeneficiary != address(0));
+        require(_merkleMinter != address(0));
+
         // Initial cap is 10 billion
-        uint256 initialDistribution = 10_000_000_000;
+        uint256 initialDistribution = 10_000_000_000 * decimals();
         mintCapacity[_merkleMinter] = initialDistribution;
         distributedSupplyCap = initialDistribution;
 
