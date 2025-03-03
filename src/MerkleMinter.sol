@@ -3,14 +3,17 @@ pragma solidity 0.8.28;
 
 import {KatToken} from "./KatToken.sol";
 import {MerkleProof} from "dependencies/@openzeppelin-contracts-5.1.0/utils/cryptography/MerkleProof.sol";
+import {BitMaps} from "dependencies/@openzeppelin-contracts-5.1.0/utils/structs/BitMaps.sol";
 
 contract MerkleMinter {
+    using BitMaps for BitMaps.BitMap;
+
     bytes32 public root;
-    mapping(bytes32 => bool) public nullifier;
+    BitMaps.BitMap isClaimed;
 
     KatToken public katToken;
 
-    uint256 immutable public unlockTime;
+    uint256 public immutable unlockTime;
     bool public locked = true;
     address public unlocker;
     address public rootSetter;
@@ -45,16 +48,17 @@ contract MerkleMinter {
     /**
      * Claim function that checks if a leaf is inside the root using a proof and mints the expected token amount to the receiver
      * @param proof MerkleProof from the leaf to be claimed to the root
+     * @param index Index of the claim
      * @param amount Token amount for this leaf
      * @param receiver Address of the token receiver for this leaf
      */
-    function claimKatToken(bytes32[] memory proof, uint256 amount, address receiver) public {
+    function claimKatToken(bytes32[] memory proof, uint256 index, uint256 amount, address receiver) public {
         // do a fail fast check on time first, then storage slot, this keeps claim cheap after the time unlock
         require(((block.timestamp > unlockTime) || !locked), "Minter locked.");
-        bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(receiver, amount))));
-        require(!nullifier[leaf], "Already claimed.");
+        bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(index, receiver, amount))));
+        require(!isClaimed.get(index), "Already claimed.");
         require(MerkleProof.verify(proof, root, leaf), "Proof failed");
-        nullifier[leaf] = true;
+        isClaimed.set(index);
         katToken.mintTo(receiver, amount);
     }
 }
