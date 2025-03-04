@@ -7,8 +7,11 @@ import {PowUtil} from "./Powutil.sol";
 contract KatToken is ERC20Permit {
     // This role can set the inflation to values between 0% and 3% per year
     address public inflationAdmin;
+    address public pendingInflationAdmin;
+
     // Initial receiver of the inflated minting capacity, can distribute it away as needed
     address public inflationBeneficiary;
+    address public pendingInflationBeneficiary;
 
     // cap after the last settlement
     uint256 distributedSupplyCap;
@@ -38,7 +41,7 @@ contract KatToken is ERC20Permit {
         require(_merkleMinter != address(0));
 
         // Initial cap is 10 billion
-        uint256 initialDistribution = 10_000_000_000 * decimals();
+        uint256 initialDistribution = 10_000_000_000 * 10 ^ decimals();
         mintCapacity[_merkleMinter] = initialDistribution;
         distributedSupplyCap = initialDistribution;
 
@@ -57,27 +60,59 @@ contract KatToken is ERC20Permit {
     }
 
     /**
-     * Function to change the current owner of the inflationAdmin
-     * @dev if we just have two roles, maybe unique functions would make sense
-     * @param newOwner address that will hold the role
+     * Function to change the current owner of the inflationAdmin role
+     * To finalize the change the new owner needs to call acceptInflationAdmin()
+     * @param newInflationAdmin address that will hold the role
      */
-    function changeInflationAdmin(address newOwner) public {
-        // Use 0xDead to disable role, careful, this can't be reverted
-        require(newOwner != address(0), "Missing new owner.");
+    function changeInflationAdmin(address newInflationAdmin) public {
         require(msg.sender == inflationAdmin, "Not role owner.");
-        inflationAdmin = newOwner;
+        pendingInflationAdmin = newInflationAdmin;
     }
 
     /**
-     * Function to change the current owner of the inflationBeneficiary
-     * @dev if we just have two roles, maybe unique functions would make sense
-     * @param newOwner address that will hold the role
+     * Function to accept the inflationAdmin role
      */
-    function changeInflationBeneficiary(address newOwner) public {
-        // Use 0xDead to disable role, careful, this can't be reverted
-        require(newOwner != address(0), "Missing new owner.");
+    function acceptInflationAdmin() public {
+        require(msg.sender == pendingInflationAdmin, "Not new role owner.");
+        inflationAdmin = pendingInflationAdmin;
+        pendingInflationAdmin = address(0);
+    }
+
+    /**
+     * Function to renounce the inflationAdmin role
+     * This can't be reverted
+     */
+    function renounceInflationAdmin() public {
+        require(msg.sender == inflationAdmin, "Not role owner.");
+        inflationAdmin = address(0);
+    }
+
+    /**
+     * Function to change the current owner of the inflationBeneficiary role
+     * To finalize the change the new owner needs to call acceptInflationBeneficiary()
+     * @param newInflationBeneficiary address that will hold the role
+     */
+    function changeInflationBeneficiary(address newInflationBeneficiary) public {
         require(msg.sender == inflationBeneficiary, "Not role owner.");
-        inflationBeneficiary = newOwner;
+        pendingInflationBeneficiary = newInflationBeneficiary;
+    }
+
+    /**
+     * Function to accept the inflationBeneficiary role
+     */
+    function acceptInflationBeneficiary() public {
+        require(msg.sender == pendingInflationBeneficiary, "Not new role owner.");
+        inflationBeneficiary = pendingInflationBeneficiary;
+        pendingInflationBeneficiary = address(0);
+    }
+
+    /**
+     * Function to renounce the inflationBeneficiary role
+     * This can't be reverted
+     */
+    function renounceInflationBeneficiary() public {
+        require(msg.sender == inflationBeneficiary, "Not role owner.");
+        inflationBeneficiary = address(0);
     }
 
     /**
