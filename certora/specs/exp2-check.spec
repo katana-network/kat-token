@@ -57,3 +57,33 @@ rule exp2LowerBound() {
     lowerBound(17*ONE18()/2, ONE18()* 3620387 / 10000);
     lowerBound(19*ONE18()/2, ONE18()* 7240773 / 10000);
 }
+
+function upperBound(mathint x, mathint res) {
+    mathint e = exp2(assert_uint256(x));
+    assert(4 * e <= 5*res);
+}
+
+rule exp2UpperBound() {
+    upperBound(0*ONE18(), ONE18());
+    upperBound(1*ONE18(), 2*ONE18());
+    upperBound(2*ONE18(), 4*ONE18());
+    upperBound(3*ONE18(), 8*ONE18());
+    upperBound(4*ONE18(), 16*ONE18());
+    upperBound(5*ONE18(), 32*ONE18());
+    upperBound(6*ONE18(), 64*ONE18());
+    upperBound(7*ONE18(), 128*ONE18());
+    upperBound(8*ONE18(), 256*ONE18());
+    upperBound(9*ONE18(), 512*ONE18());
+    upperBound(10*ONE18(), 1024*ONE18());
+
+    upperBound(1*ONE18()/2,  ONE18()*   14142 / 10000);
+    upperBound(3*ONE18()/2,  ONE18()*   28284 / 10000);
+    upperBound(5*ONE18()/2,  ONE18()*   56569 / 10000);
+    upperBound(7*ONE18()/2,  ONE18()*  113137 / 10000);
+    upperBound(9*ONE18()/2,  ONE18()*  226274 / 10000);
+    upperBound(11*ONE18()/2, ONE18()*  452548 / 10000);
+    upperBound(13*ONE18()/2, ONE18()*  905097 / 10000);
+    upperBound(15*ONE18()/2, ONE18()* 1810193 / 10000);
+    upperBound(17*ONE18()/2, ONE18()* 3620387 / 10000);
+    upperBound(19*ONE18()/2, ONE18()* 7240773 / 10000);
+}
