@@ -143,7 +143,7 @@ contract KatToken is ERC20Permit {
      */
     function changeInflation(uint256 value) public {
         require(msg.sender == inflationAdmin, "Not allowed.");
-        require(value < MAX_INFLATION, "Inflation to large.");
+        require(value < MAX_INFLATION, "Inflation too large.");
         distributeInflation();
         inflationFactor = value;
     }
