@@ -15,3 +15,8 @@ docs/
 
 dependencies/
 node_modules/
+
+# Certora files
+.certora_internal/
+.venv/
+emv-*-certora-*
