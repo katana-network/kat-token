@@ -7,16 +7,6 @@ methods {
 definition ONE18() returns uint256 =  1000000000000000000;
 definition Log2() returns uint256 =    693147180559945309;
 
-definition to18(uint256 x) returns mathint = x * ONE18();
-definition taylor2xAt(uint256 min, uint256 max, uint256 mult) returns bool =
-    forall uint256 x. (x >= min && x < max) => (
-        ghostExp2(x) >= 
-            to18(mult)
-            + mult*(x-to18(min)) * Log2() / ONE18()
-            + mult*(x-to18(min))*(x-to18(min)) * Log2()*Log2() / ONE18()/ONE18()/ONE18() / 2
-            + mult*(x-to18(min))*(x-to18(min))*(x-to18(min)) * Log2()*Log2()*Log2() /ONE18()/ONE18()/ONE18()/ONE18()/ONE18() / 6
-    );
-
 ghost ghostExp2(mathint) returns uint256 {
     axiom ghostExp2(0) == ONE18();
     axiom ghostExp2(ONE18()) == 2*ONE18();
