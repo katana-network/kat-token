@@ -11,6 +11,6 @@ console.log('Proof for 1: ', proof);
 
 const proof2 = tree.getProof(0);
 
-console.log('Proof for 1: ', proof2);
+console.log('Proof for 2: ', proof2);
 
 console.log("Root ", tree.root)
