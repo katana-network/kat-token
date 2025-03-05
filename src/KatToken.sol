@@ -14,9 +14,9 @@ contract KatToken is ERC20Permit {
     address public pendingInflationBeneficiary;
 
     // cap after the last settlement
-    uint256 distributedSupplyCap;
+    uint256 public distributedSupplyCap;
     // Blocktime of last inflated mintCapacity distribution
-    uint256 lastMintCapacityIncrease;
+    uint256 public lastMintCapacityIncrease;
     // Inflation Factor, only relevant 4 years after deployment
     uint256 public inflationFactor;
     // Maximum configurable inflation (3% annually)
@@ -64,7 +64,7 @@ contract KatToken is ERC20Permit {
      * To finalize the change the new owner needs to call acceptInflationAdmin()
      * @param newInflationAdmin address that will hold the role
      */
-    function changeInflationAdmin(address newInflationAdmin) public {
+    function changeInflationAdmin(address newInflationAdmin) external {
         require(msg.sender == inflationAdmin, "Not role owner.");
         pendingInflationAdmin = newInflationAdmin;
     }
@@ -72,7 +72,7 @@ contract KatToken is ERC20Permit {
     /**
      * Function to accept the inflationAdmin role
      */
-    function acceptInflationAdmin() public {
+    function acceptInflationAdmin() external {
         require(msg.sender == pendingInflationAdmin, "Not new role owner.");
         inflationAdmin = pendingInflationAdmin;
         pendingInflationAdmin = address(0);
@@ -82,7 +82,7 @@ contract KatToken is ERC20Permit {
      * Function to renounce the inflationAdmin role
      * This can't be reverted
      */
-    function renounceInflationAdmin() public {
+    function renounceInflationAdmin() external {
         require(msg.sender == inflationAdmin, "Not role owner.");
         inflationAdmin = address(0);
     }
@@ -92,7 +92,7 @@ contract KatToken is ERC20Permit {
      * To finalize the change the new owner needs to call acceptInflationBeneficiary()
      * @param newInflationBeneficiary address that will hold the role
      */
-    function changeInflationBeneficiary(address newInflationBeneficiary) public {
+    function changeInflationBeneficiary(address newInflationBeneficiary) external {
         require(msg.sender == inflationBeneficiary, "Not role owner.");
         pendingInflationBeneficiary = newInflationBeneficiary;
     }
@@ -100,7 +100,7 @@ contract KatToken is ERC20Permit {
     /**
      * Function to accept the inflationBeneficiary role
      */
-    function acceptInflationBeneficiary() public {
+    function acceptInflationBeneficiary() external {
         require(msg.sender == pendingInflationBeneficiary, "Not new role owner.");
         inflationBeneficiary = pendingInflationBeneficiary;
         pendingInflationBeneficiary = address(0);
@@ -110,7 +110,7 @@ contract KatToken is ERC20Permit {
      * Function to renounce the inflationBeneficiary role
      * This can't be reverted
      */
-    function renounceInflationBeneficiary() public {
+    function renounceInflationBeneficiary() external {
         require(msg.sender == inflationBeneficiary, "Not role owner.");
         inflationBeneficiary = address(0);
     }
@@ -120,7 +120,7 @@ contract KatToken is ERC20Permit {
      * @param to Receiver of the newly minted tokens
      * @param amount Amount to be minted
      */
-    function mintTo(address to, uint256 amount) public {
+    function mintTo(address to, uint256 amount) external {
         require(mintCapacity[msg.sender] >= amount, "Not enough mint capacity.");
         mintCapacity[msg.sender] -= amount;
         _mint(to, amount);
@@ -131,7 +131,7 @@ contract KatToken is ERC20Permit {
      * Already minted and not yet minted token amounts add up to this value
      * @return The current total token cap
      */
-    function cap() public view returns (uint256) {
+    function cap() external view returns (uint256) {
         return distributedSupplyCap + _calcInflation();
     }
 
@@ -141,7 +141,7 @@ contract KatToken is ERC20Permit {
      * @dev only callable by the current INFLATION_ADMIN
      * @param value The new inflation factor
      */
-    function changeInflation(uint256 value) public {
+    function changeInflation(uint256 value) external {
         require(msg.sender == inflationAdmin, "Not allowed.");
         require(value < MAX_INFLATION, "Inflation too large.");
         distributeInflation();
@@ -181,7 +181,7 @@ contract KatToken is ERC20Permit {
      * @param to Receiver of the mint capacity
      * @param amount Amount to be added as mint capacity
      */
-    function distributeMintCapacity(address to, uint256 amount) public {
+    function distributeMintCapacity(address to, uint256 amount) external {
         require(to != address(0), "Sending to 0 address");
         require(mintCapacity[msg.sender] >= amount, "Not enough capacity.");
         mintCapacity[msg.sender] -= amount;

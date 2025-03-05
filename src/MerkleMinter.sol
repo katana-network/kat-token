@@ -33,7 +33,7 @@ contract MerkleMinter {
      * @param _root Merkleroot to the airdrop receivers merkle tree
      * @param _katToken Address of the KatToken to be airdropped
      */
-    function init(bytes32 _root, address _katToken) public {
+    function init(bytes32 _root, address _katToken) external {
         require(msg.sender == rootSetter, "Not rootSetter.");
         root = _root;
         katToken = KatToken(_katToken);
@@ -43,7 +43,7 @@ contract MerkleMinter {
     /**
      * Unlocks the claim function early
      */
-    function unlock() public {
+    function unlock() external {
         require(msg.sender == unlocker, "Not unlocker.");
         locked = false;
         unlocker = address(0);
@@ -56,7 +56,7 @@ contract MerkleMinter {
      * @param amount Token amount for this leaf
      * @param receiver Address of the token receiver for this leaf
      */
-    function claimKatToken(bytes32[] memory proof, uint256 index, uint256 amount, address receiver) public {
+    function claimKatToken(bytes32[] memory proof, uint256 index, uint256 amount, address receiver) external {
         // do a fail fast check on time first, then storage slot, this keeps claim cheap after the time unlock
         require(((block.timestamp > unlockTime) || !locked), "Minter locked.");
         bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(index, receiver, amount))));
