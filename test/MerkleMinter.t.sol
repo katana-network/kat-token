@@ -44,6 +44,9 @@ contract MerkleMinterTest is Test, DeployScript {
         merkleMinter.init(root, dummyToken);
         assertEq(merkleMinter.root(), root);
         assertEq(address(merkleMinter.katToken()), dummyToken);
+        vm.prank(dummyRootSetter);
+        merkleMinter.renounceRootSetter();
+        assertEq(merkleMinter.rootSetter(), address(0));
     }
 
     function test_root_setter_twice() public {

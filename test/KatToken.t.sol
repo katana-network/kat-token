@@ -48,6 +48,15 @@ contract KatTokenTest is Test, DeployScript {
         token.acceptInflationAdmin();
     }
 
+    function test_renounce_inflation_admin() public {
+        vm.prank(alice);
+        vm.expectRevert("Not role owner.");
+        token.renounceInflationAdmin();
+        vm.prank(dummyInflationAdmin);
+        token.renounceInflationAdmin();
+        assertEq(token.inflationAdmin(), address(0));
+    }
+
     function test_change_inflation_beneficiary() public {
         vm.prank(dummyInflationBen);
         vm.expectEmit(true, true, true, true);
@@ -80,5 +89,14 @@ contract KatTokenTest is Test, DeployScript {
         vm.prank(beatrice);
         vm.expectRevert("Not new role owner.");
         token.acceptInflationBeneficiary();
+    }
+
+    function test_renounce_inflation_beneficiary() public {
+        vm.prank(alice);
+        vm.expectRevert("Not role owner.");
+        token.renounceInflationBeneficiary();
+        vm.prank(dummyInflationBen);
+        token.renounceInflationBeneficiary();
+        assertEq(token.inflationBeneficiary(), address(0));
     }
 }
