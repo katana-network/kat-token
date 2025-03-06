@@ -7,6 +7,8 @@ import {PowUtil} from "./Powutil.sol";
 contract KatToken is ERC20Permit {
     event InflationDistributed(address receiver, uint256 amount);
     event MintCapacityDistributed(address sender, address receiver, uint256 amount);
+    event InflationAdminChanged(address newAdmin, bool pending);
+    event InflationBeneficiaryChanged(address newBeneficiary, bool pending);
 
     // This role can set the inflation to values between 0% and 3% per year
     address public inflationAdmin;
@@ -70,6 +72,7 @@ contract KatToken is ERC20Permit {
     function changeInflationAdmin(address newInflationAdmin) external {
         require(msg.sender == inflationAdmin, "Not role owner.");
         pendingInflationAdmin = newInflationAdmin;
+        emit InflationAdminChanged(newInflationAdmin, true);
     }
 
     /**
@@ -79,6 +82,7 @@ contract KatToken is ERC20Permit {
         require(msg.sender == pendingInflationAdmin, "Not new role owner.");
         inflationAdmin = pendingInflationAdmin;
         pendingInflationAdmin = address(0);
+        emit InflationAdminChanged(inflationAdmin, false);
     }
 
     /**
@@ -88,6 +92,7 @@ contract KatToken is ERC20Permit {
     function renounceInflationAdmin() external {
         require(msg.sender == inflationAdmin, "Not role owner.");
         inflationAdmin = address(0);
+        emit InflationAdminChanged(address(0), false);
     }
 
     /**
@@ -98,6 +103,7 @@ contract KatToken is ERC20Permit {
     function changeInflationBeneficiary(address newInflationBeneficiary) external {
         require(msg.sender == inflationBeneficiary, "Not role owner.");
         pendingInflationBeneficiary = newInflationBeneficiary;
+        emit InflationBeneficiaryChanged(newInflationBeneficiary, true);
     }
 
     /**
@@ -107,6 +113,7 @@ contract KatToken is ERC20Permit {
         require(msg.sender == pendingInflationBeneficiary, "Not new role owner.");
         inflationBeneficiary = pendingInflationBeneficiary;
         pendingInflationBeneficiary = address(0);
+        emit InflationBeneficiaryChanged(inflationBeneficiary, false);
     }
 
     /**
@@ -116,6 +123,7 @@ contract KatToken is ERC20Permit {
     function renounceInflationBeneficiary() external {
         require(msg.sender == inflationBeneficiary, "Not role owner.");
         inflationBeneficiary = address(0);
+        emit InflationBeneficiaryChanged(address(0), false);
     }
 
     /**
