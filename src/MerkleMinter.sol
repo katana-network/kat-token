@@ -61,6 +61,14 @@ contract MerkleMinter {
     }
 
     /**
+     * Function to check wether a specific claim has already been used
+     * @param index The index of the claim set in the leaf
+     */
+    function indexIsClaimed(uint256 index) external view returns (bool) {
+        return isClaimed.get(index);
+    }
+
+    /**
      * Claim function that checks if a leaf is inside the root using a proof and mints the expected token amount to the receiver
      * @param proof MerkleProof from the leaf to be claimed to the root
      * @param index Index of the claim
