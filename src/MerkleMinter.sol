@@ -19,7 +19,9 @@ contract MerkleMinter {
     address public rootSetter;
 
     constructor(uint256 _unlockTime, address _unlocker, address _rootSetter) {
-        require(_unlockTime != 0);
+        require(_unlockTime > block.timestamp);
+        // Unlock at most 12 months in the future
+        require(_unlockTime < block.timestamp + 12 * 30 days);
         require(_unlocker != address(0));
         require(_rootSetter != address(0));
 
