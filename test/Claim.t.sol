@@ -27,11 +27,11 @@ contract ClaimTestSimple is Test, DeployScript {
         vm.prank(dummyRootSetter);
         merkleMinter.init(root, address(katToken));
         vm.prank(dummyUnlocker);
-        merkleMinter.unlock();
+        merkleMinter.unlockAndRenounceUnlocker();
         bytes32[] memory proof = ffiHelper.getProof(index);
         (address addr, uint256 val) = ffiHelper.getLeaf(index);
         assertEq(katToken.balanceOf(addr), 0);
-        merkleMinter.claimKatToken(proof, val, addr);
+        merkleMinter.claimKatToken(proof, index, val, addr);
         assertEq(katToken.balanceOf(addr), val);
     }
 
@@ -43,7 +43,7 @@ contract ClaimTestSimple is Test, DeployScript {
         bytes32[] memory proof = ffiHelper.getProof(index);
         (address addr, uint256 val) = ffiHelper.getLeaf(index);
         assertEq(katToken.balanceOf(addr), 0);
-        merkleMinter.claimKatToken(proof, val, addr);
+        merkleMinter.claimKatToken(proof, index, val, addr);
         assertEq(katToken.balanceOf(addr), val);
     }
 }
@@ -68,7 +68,7 @@ contract ClaimTestMulti is Test, DeployScript {
         vm.prank(dummyRootSetter);
         merkleMinter.init(root, address(katToken));
         vm.prank(dummyUnlocker);
-        merkleMinter.unlock();
+        merkleMinter.unlockAndRenounceUnlocker();
     }
 
     /// forge-config: default.fuzz.runs = 10
@@ -79,14 +79,13 @@ contract ClaimTestMulti is Test, DeployScript {
 
             bytes32[] memory proof = ffiHelper.getProof(index);
             (address addr, uint256 val) = ffiHelper.getLeaf(index);
-            bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(addr, val))));
 
-            if (merkleMinter.nullifier(leaf)) {
+            if (merkleMinter.indexIsClaimed(index)) {
                 vm.expectRevert("Already claimed.");
-                merkleMinter.claimKatToken(proof, val, addr);
+                merkleMinter.claimKatToken(proof, index, val, addr);
             } else {
                 assertEq(katToken.balanceOf(addr), 0);
-                merkleMinter.claimKatToken(proof, val, addr);
+                merkleMinter.claimKatToken(proof, index, val, addr);
                 assertEq(katToken.balanceOf(addr), val);
                 totalReceived += val;
                 vm.prank(addr);
