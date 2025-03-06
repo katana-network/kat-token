@@ -46,7 +46,7 @@ contract KatToken is ERC20Permit {
         require(_merkleMinter != address(0));
 
         // Initial cap is 10 billion
-        uint256 initialDistribution = 10_000_000_000 * 10 ^ decimals();
+        uint256 initialDistribution = 10_000_000_000 * (10 ** decimals());
         mintCapacity[_merkleMinter] = initialDistribution;
         distributedSupplyCap = initialDistribution;
 
