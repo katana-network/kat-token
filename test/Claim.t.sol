@@ -14,7 +14,7 @@ contract ClaimTestSimple is Test, DeployScript {
     FFIHelper ffiHelper;
 
     // Uses the testTree.json in test/utils
-    bytes32 root = 0x853ba80cd07a4468b83328d1742dcc7732b3df989c78221dbfaa3c01656bdeca;
+    bytes32 root = 0x32523fb0ed77b9c1d8cb15a59c21fcbad1e49068a2cad9f63a017590ccd00be6;
 
     function setUp() public {
         ffiHelper = new FFIHelper();
@@ -29,9 +29,9 @@ contract ClaimTestSimple is Test, DeployScript {
         vm.prank(dummyUnlocker);
         merkleMinter.unlockAndRenounceUnlocker();
         bytes32[] memory proof = ffiHelper.getProof(index);
-        (address addr, uint256 val) = ffiHelper.getLeaf(index);
+        (uint256 leafIndex, address addr, uint256 val) = ffiHelper.getLeaf(index);
         assertEq(katToken.balanceOf(addr), 0);
-        merkleMinter.claimKatToken(proof, index, val, addr);
+        merkleMinter.claimKatToken(proof, leafIndex, val, addr);
         assertEq(katToken.balanceOf(addr), val);
     }
 
@@ -41,9 +41,9 @@ contract ClaimTestSimple is Test, DeployScript {
         merkleMinter.init(root, address(katToken));
         vm.warp(365 * 4 days + 1 days);
         bytes32[] memory proof = ffiHelper.getProof(index);
-        (address addr, uint256 val) = ffiHelper.getLeaf(index);
+        (uint256 leafIndex, address addr, uint256 val) = ffiHelper.getLeaf(index);
         assertEq(katToken.balanceOf(addr), 0);
-        merkleMinter.claimKatToken(proof, index, val, addr);
+        merkleMinter.claimKatToken(proof, leafIndex, val, addr);
         assertEq(katToken.balanceOf(addr), val);
     }
 }
@@ -58,7 +58,7 @@ contract ClaimTestMulti is Test, DeployScript {
     uint256 totalReceived;
 
     // Uses the testTree.json in test/utils
-    bytes32 root = 0x853ba80cd07a4468b83328d1742dcc7732b3df989c78221dbfaa3c01656bdeca;
+    bytes32 root = 0x32523fb0ed77b9c1d8cb15a59c21fcbad1e49068a2cad9f63a017590ccd00be6;
 
     function setUp() public {
         ffiHelper = new FFIHelper();
@@ -78,14 +78,14 @@ contract ClaimTestMulti is Test, DeployScript {
             vm.assume(index < 2000);
 
             bytes32[] memory proof = ffiHelper.getProof(index);
-            (address addr, uint256 val) = ffiHelper.getLeaf(index);
+            (uint256 leafIndex, address addr, uint256 val) = ffiHelper.getLeaf(index);
 
-            if (merkleMinter.indexIsClaimed(index)) {
+            if (merkleMinter.indexIsClaimed(leafIndex)) {
                 vm.expectRevert("Already claimed.");
-                merkleMinter.claimKatToken(proof, index, val, addr);
+                merkleMinter.claimKatToken(proof, leafIndex, val, addr);
             } else {
                 assertEq(katToken.balanceOf(addr), 0);
-                merkleMinter.claimKatToken(proof, index, val, addr);
+                merkleMinter.claimKatToken(proof, leafIndex, val, addr);
                 assertEq(katToken.balanceOf(addr), val);
                 totalReceived += val;
                 vm.prank(addr);

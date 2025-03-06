@@ -13,11 +13,11 @@ contract FFIHelper is Test {
         return abi.decode(res, (bytes32[]));
     }
 
-    function getLeaf(uint256 index) public returns (address, uint256) {
+    function getLeaf(uint256 index) public returns (uint256, address, uint256) {
         string[] memory ffiInputs = new string[](3);
         ffiInputs[0] = "node";
         ffiInputs[1] = "test/utils/getLeaf.js";
         ffiInputs[2] = vm.toString(index); // leaf index
-        return abi.decode(vm.ffi(ffiInputs), (address, uint256));
+        return abi.decode(vm.ffi(ffiInputs), (uint256, address, uint256));
     }
 }
