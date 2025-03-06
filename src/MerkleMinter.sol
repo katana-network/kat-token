@@ -29,7 +29,7 @@ contract MerkleMinter {
     }
 
     /**
-     * Set the token and the merkle root once
+     * Set the token and the merkle root, once successfully done RootSetter should be renounced
      * @param _root Merkleroot to the airdrop receivers merkle tree
      * @param _katToken Address of the KatToken to be airdropped
      */
@@ -37,13 +37,20 @@ contract MerkleMinter {
         require(msg.sender == rootSetter, "Not rootSetter.");
         root = _root;
         katToken = KatToken(_katToken);
+    }
+
+    /**
+     * Renounces the RootSetter, so neither KatToken address nor the merkle root can be changed anymore
+     */
+    function renounceRootSetter() external {
+        require(msg.sender == rootSetter, "Not rootSetter.");
         rootSetter = address(0);
     }
 
     /**
-     * Unlocks the claim function early
+     * Unlocks the claim function early, afterwards contract can't be locked again
      */
-    function unlock() external {
+    function unlockAndRenounceUnlocker() external {
         require(msg.sender == unlocker, "Not unlocker.");
         locked = false;
         unlocker = address(0);
@@ -57,11 +64,13 @@ contract MerkleMinter {
      * @param receiver Address of the token receiver for this leaf
      */
     function claimKatToken(bytes32[] memory proof, uint256 index, uint256 amount, address receiver) external {
-        // do a fail fast check on time first, then storage slot, this keeps claim cheap after the time unlock
+        // do a fail fast check on time first, then storage slot, this makes claim cheap again after the time unlock
         require(((block.timestamp > unlockTime) || !locked), "Minter locked.");
-        bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(index, receiver, amount))));
         require(!isClaimed.get(index), "Already claimed.");
+
+        bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(index, receiver, amount))));
         require(MerkleProof.verify(proof, root, leaf), "Proof failed");
+
         isClaimed.set(index);
         katToken.mintTo(receiver, amount);
     }
