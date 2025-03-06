@@ -5,7 +5,7 @@ import "dependencies/forge-std-1.9.4/src/Test.sol";
 import "../src/KatToken.sol";
 import "../script/Deploy.s.sol";
 
-contract KatTokenTest is Test, DeployScript {
+contract MintTest is Test, DeployScript {
     KatToken token;
     address alice = makeAddr("alice");
     address beatrice = makeAddr("beatrice");
@@ -44,9 +44,9 @@ contract KatTokenTest is Test, DeployScript {
         warpYears(5);
         token.distributeInflation();
         uint256 originalCapacity = token.mintCapacity(dummyInflationBen);
-        vm.expectRevert("Sending to 0x00");
+        vm.expectRevert("Sending to 0 address");
         vm.prank(dummyInflationBen);
-        token.distributeMintCapacity(address(0x00), originalCapacity);
+        token.distributeMintCapacity(address(0), originalCapacity);
     }
 
     function test_mintTo() public {
