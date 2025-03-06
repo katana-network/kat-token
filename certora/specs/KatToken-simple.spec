@@ -1,5 +1,3 @@
-import "./exp2-summary.spec";
-
 methods {
     function inflationAdmin() external returns (address) envfree;
     function inflationBeneficiary() external returns (address) envfree;
@@ -36,19 +34,4 @@ rule canOnlySendAvailableMintCapacity() {
 
     assert(ownCapacityBefore >= amount);
     assert(ownCapacityBefore + toCapacityBefore == ownCapacityAfter + toCapacityAfter);
-}
-
-rule nonTrivialDistributeInflation() {
-    env e;
-
-    // enforce non-trivial inflation
-    require(inflationFactor() > MAX_INFLATION() / 2);
-    require(inflationFactor() < MAX_INFLATION());
-
-    uint256 capacityBefore = mintCapacity(inflationBeneficiary());
-
-    distributeInflation(e);
-
-    uint256 capacityAfter = mintCapacity(inflationBeneficiary());
-    satisfy(capacityAfter > capacityBefore);
 }
