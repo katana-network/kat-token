@@ -8,6 +8,8 @@ import {BitMaps} from "dependencies/@openzeppelin-contracts-5.1.0/utils/structs/
 contract MerkleMinter {
     using BitMaps for BitMaps.BitMap;
 
+    event Claimed(uint256 index);
+
     bytes32 public root;
     BitMaps.BitMap isClaimed;
 
@@ -75,5 +77,6 @@ contract MerkleMinter {
 
         isClaimed.set(index);
         katToken.mintTo(receiver, amount);
+        emit Claimed(index);
     }
 }

@@ -5,6 +5,9 @@ import {ERC20Permit, ERC20} from "dependencies/@openzeppelin-contracts-5.1.0/tok
 import {PowUtil} from "./Powutil.sol";
 
 contract KatToken is ERC20Permit {
+    event InflationDistributed(address receiver, uint256 amount);
+    event MintCapacityDistributed(address sender, address receiver, uint256 amount);
+
     // This role can set the inflation to values between 0% and 3% per year
     address public inflationAdmin;
     address public pendingInflationAdmin;
@@ -174,6 +177,7 @@ contract KatToken is ERC20Permit {
         if (block.timestamp > lastMintCapacityIncrease) {
             lastMintCapacityIncrease = block.timestamp;
         }
+        emit InflationDistributed(inflationBeneficiary, inflation);
     }
 
     /**
@@ -186,5 +190,6 @@ contract KatToken is ERC20Permit {
         require(mintCapacity[msg.sender] >= amount, "Not enough capacity.");
         mintCapacity[msg.sender] -= amount;
         mintCapacity[to] += amount;
+        emit MintCapacityDistributed(msg.sender, to, amount);
     }
 }
