@@ -10,15 +10,15 @@ contract MerkleMinterTest is Test, DeployScript {
     address alice = makeAddr("alice");
     address dummyToken = makeAddr("dummyToken");
 
-    bytes32[] proof1 = [bytes32(0xb92c48e9d7abe27fd8dfd6b5dfdbfb1c9a463f80c712b66f3a5180a090cccafc)];
+    bytes32[] proof1 = [bytes32(0x191d0f7d65eab0fa6c201d27df14a838bda49373c2ccb0fa0263334fcebd4d0e)];
     uint256 amount1 = 5000000000000000000;
     uint256 index1 = 0;
     address claimer1 = 0x1111111111111111111111111111111111111111;
-    bytes32[] proof2 = [bytes32(0xeb02c421cfa48976e66dfb29120745909ea3a0f843456c263cf8f1253483e283)];
+    bytes32[] proof2 = [bytes32(0x006339a0971f8d293763c27967110607da32bf3548b17cce12da9fee72331612)];
     uint256 amount2 = 2500000000000000000;
     uint256 index2 = 1;
     address claimer2 = 0x2222222222222222222222222222222222222222;
-    bytes32 root = 0xd4dee0beab2d53f2cc83e567171bd2820e49898130a22622b10ead383e90bd77;
+    bytes32 root = 0xd16896c5291f22b49599c38d37d92f80f4819709ebdd22205a937f9c9ac5d13a;
 
     function setUp() public {
         merkleMinter = deployDummyMerkleMinter();
