@@ -14,6 +14,9 @@ methods {
 definition ONE18() returns uint256 =  1000000000000000000;
 definition days(uint256 d) returns uint256 = assert_uint256(d * 60 * 60 * 24);
 
+/**
+ * Show that exp2 is actually exact for some easy values.
+ */
 rule exp2_correctValues() {
     assert(exp2(require_uint256(0 * ONE18())) == 1*ONE18());
     assert(exp2(require_uint256(1 * ONE18())) == 2*ONE18());
