@@ -1,0 +1,46 @@
+
+// questions / observations:
+MerkleMinter.claimKatToken can be called with amount = 0
+KatToken.distributeInflation: wouldn't it be better to add a check block.timestamp > lastMintCapacityIncrease at the beginning to save execution of the other commands?
+KatToken.distributeInflation: is the check on line 133 needed?
+KatToken.distributeMintCapacity are the checks on lines 144 and 145 needed?
+KatToken.distributeMintCapacity can we use unchecked instead?
+KatToken: line 115 can't we have >= instead of >
+wrong comment in KatToken.distributeInflation line 132, it should be before line 129
+inflationBeneficiary and inflationAdmin: wouldn't it be better to use the existing Ownable module?
+    - the new owner cannot decline
+there's no check that merkleMinter is actually a MerkleMinter contract
+
+// properties:
+----------------
+Powutil:
+
+exp2(x) == 2^x (or differs by at most 1e18, etc.), only for x < 1.03 * 1000 years
+exp2(x + y) == exp2(x) * exp2(y)
+
+----------------
+merkleminter:
+
+kattoken cannot be changed
+locked can only change from true -> false
+rootSetter can only change from x -> 0
+root can only change once
+only rootSetter can call init
+only unlocker can call unlock
+claimKatToken cannot be called before unlockTime unless already unlocked
+claimKatToken will increase receiver's balance when executed succesfully 
+
+----------------
+kattoken:
+
+only certain methods may increase/decrease total mint capacity
+total mint capacity + mintedTokens can only increase
+lastMintCapacityIncrease can only increase
+distributedSupplyCap == total mint capacity + mintedTokens
+for all x: mintCapacity[x] <= distributedSupplyCap
+inflation is less than MAX_INFLATION
+inflationBeneficiary and inflationAdmin != 0
+only inflationBeneficiary and inflationAdmin can change inflationBeneficiary and inflationAdmin respectively
+
+summarise _mint, keep track of balances in CVL
+summarise MerklerProof.verify to nondet
