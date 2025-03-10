@@ -6,6 +6,7 @@ import {PowUtil} from "./Powutil.sol";
 
 contract KatToken is ERC20Permit {
     event InflationDistributed(address receiver, uint256 amount);
+    event InflationChanged(uint256 oldValue, uint256 newValue);
     event MintCapacityDistributed(address sender, address receiver, uint256 amount);
     event InflationAdminChanged(address newAdmin, bool pending);
     event InflationBeneficiaryChanged(address newBeneficiary, bool pending);
@@ -156,7 +157,9 @@ contract KatToken is ERC20Permit {
         require(msg.sender == inflationAdmin, "Not allowed.");
         require(value < MAX_INFLATION, "Inflation too large.");
         distributeInflation();
+        uint256 oldValue = inflationFactor;
         inflationFactor = value;
+        emit InflationChanged(oldValue, value);
     }
 
     /**
