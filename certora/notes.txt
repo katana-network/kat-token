@@ -5,9 +5,9 @@ KatToken.distributeInflation: wouldn't it be better to add a check block.timesta
 KatToken.distributeInflation: is the check on line 133 needed?
 KatToken.distributeMintCapacity are the checks on lines 144 and 145 needed?
 KatToken.distributeMintCapacity can we use unchecked instead?
-KatToken: line 115 can't we have >= instead of >
+KatToken: line 115 can't we have >= instead of > ?
 wrong comment in KatToken.distributeInflation line 132, it should be before line 129
-inflationBeneficiary and inflationAdmin: wouldn't it be better to use the existing Ownable module?
+inflationBeneficiary and inflationAdmin: wouldn't it be better to use the existing Ownable interface?
     - the new owner cannot decline
 there's no check that merkleMinter is actually a MerkleMinter contract
 
