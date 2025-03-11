@@ -154,7 +154,7 @@ contract KatToken is ERC20Permit {
      * @param value The new inflation factor
      */
     function changeInflation(uint256 value) external {
-        require(msg.sender == inflationAdmin, "Not allowed.");
+        require(msg.sender == inflationAdmin, "Not role owner.");
         require(value < MAX_INFLATION, "Inflation too large.");
         distributeInflation();
         uint256 oldValue = inflationFactor;
@@ -198,7 +198,7 @@ contract KatToken is ERC20Permit {
      */
     function distributeMintCapacity(address to, uint256 amount) external {
         require(to != address(0), "Sending to 0 address");
-        require(mintCapacity[msg.sender] >= amount, "Not enough capacity.");
+        require(mintCapacity[msg.sender] >= amount, "Not enough mint capacity.");
         mintCapacity[msg.sender] -= amount;
         mintCapacity[to] += amount;
         emit MintCapacityDistributed(msg.sender, to, amount);

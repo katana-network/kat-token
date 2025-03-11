@@ -79,7 +79,7 @@ contract InflationTest is Test, DeployScript {
     }
 
     function test_Inflation_access() public {
-        vm.expectRevert("Not allowed.");
+        vm.expectRevert("Not role owner.");
         token.changeInflation(0);
     }
 

@@ -28,7 +28,7 @@ contract MintTest is Test, DeployScript {
         warpYears(5);
         token.distributeInflation();
         uint256 originalCapacity = token.mintCapacity(dummyInflationBen);
-        vm.expectRevert("Not enough capacity.");
+        vm.expectRevert("Not enough mint capacity.");
         vm.prank(dummyInflationBen);
         token.distributeMintCapacity(alice, originalCapacity + 1);
     }
@@ -36,7 +36,7 @@ contract MintTest is Test, DeployScript {
     function test_no_capacity() public {
         assertEq(token.mintCapacity(alice), 0);
         vm.prank(alice);
-        vm.expectRevert("Not enough capacity.");
+        vm.expectRevert("Not enough mint capacity.");
         token.distributeMintCapacity(beatrice, 1);
     }
 
