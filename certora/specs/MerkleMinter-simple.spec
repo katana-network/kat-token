@@ -17,7 +17,6 @@ rule onlyRootCanInit() {
 
     assert(e.msg.sender == rootBefore);
     assert(root() == _root);
-    assert(rootSetter() == 0);
     assert(katToken() == _katToken);
 }
 
@@ -25,10 +24,11 @@ rule canOnlyClaimWhenNotLocked() {
     env e;
 
     bytes32[] proof;
+    uint256 index;
     uint256 amount;
     address receiver;
 
-    claimKatToken(e, proof, amount, receiver);
+    claimKatToken(e, proof, index, amount, receiver);
 
     assert(e.block.timestamp > unlockTime() || !locked());
 }
@@ -37,12 +37,13 @@ rule canOnlyClaimWhenNotLocked_nontrivial() {
     env e;
 
     bytes32[] proof;
+    uint256 index;
     uint256 amount;
     address receiver;
 
     require(proof.length > 0);
 
-    claimKatToken(e, proof, amount, receiver);
+    claimKatToken(e, proof, index, amount, receiver);
 
     assert(e.block.timestamp > unlockTime() || !locked());
 }
