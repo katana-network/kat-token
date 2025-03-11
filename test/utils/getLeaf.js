@@ -10,7 +10,7 @@ function main() {
 
     const value = Number(leafIndex);
     const leaf = tree.at(value);
-    console.log("0x" +  leaf[0].substring(2).padStart(64, "0") +  Number(leaf[1]).toString(16).padStart(64, "0"));
+    console.log("0x" + Number(leaf[0]).toString(16).padStart(64, "0") + leaf[1].substring(2).padStart(64, "0") + Number(leaf[2]).toString(16).padStart(64, "0"));
 }
 
 main();
