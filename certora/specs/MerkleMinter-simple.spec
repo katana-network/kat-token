@@ -32,3 +32,17 @@ rule canOnlyClaimWhenNotLocked() {
 
     assert(e.block.timestamp > unlockTime() || !locked());
 }
+
+rule canOnlyClaimWhenNotLocked_nontrivial() {
+    env e;
+
+    bytes32[] proof;
+    uint256 amount;
+    address receiver;
+
+    require(proof.length > 0);
+
+    claimKatToken(e, proof, amount, receiver);
+
+    assert(e.block.timestamp > unlockTime() || !locked());
+}
