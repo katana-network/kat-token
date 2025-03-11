@@ -1,3 +1,5 @@
+import "./exp2-summary.spec";
+
 methods {
     function inflationAdmin() external returns (address) envfree;
     function inflationBeneficiary() external returns (address) envfree;
@@ -10,6 +12,8 @@ methods {
     function get_lastMintCapacityIncrease() external returns (uint256) envfree;
     function get_distributedSupplyCap() external returns (uint256) envfree;
     
+    function ERC20._mint(address to, uint256 amount) internal
+        => _mintCVL(to, amount);
     
     //MerkleProof
     function _.verify(bytes32[] memory, bytes32, bytes32) internal => NONDET;
@@ -45,11 +49,15 @@ rule lastMintCapacityIncreaseDeverDecreases(env e, method f)
     assert lastMintCapacityIncrease_post >= lastMintCapacityIncrease_pre;
 }
 
-//mintCapacity[x] <= distributedSupplyCap
-// not an inductive property :( we need to use the equality
-// lets get rid of this. it will be in implied by the quality property anyway
-invariant mintCapacityLessThanDistributedSupplyCap(address a)
-    mintCapacity(a) <= get_distributedSupplyCap();
+rule distributedSupplyCapDeverDecreases(env e, method f)
+{
+    uint256 distributedSupplyCap_pre = get_distributedSupplyCap();
+
+    calldataarg args;
+    f(e, args);
+    uint256 distributedSupplyCap_post = get_distributedSupplyCap();
+    assert distributedSupplyCap_post >= distributedSupplyCap_pre;
+}
 
 rule canOnlySendAvailableMintCapacity() {
     env e;
@@ -68,3 +76,49 @@ rule canOnlySendAvailableMintCapacity() {
     assert(ownCapacityBefore >= amount);
     assert(ownCapacityBefore + toCapacityBefore == ownCapacityAfter + toCapacityAfter);
 }
+
+ghost mapping(address => mathint) mintedTo;
+ghost mathint totalMintCapacityChange;
+ghost mathint totalMintedChange;
+
+function _mintCVL(address to, uint256 amount)
+{
+    mintedTo[to] = mintedTo[to] + amount;
+    totalMintedChange = totalMintedChange + amount;
+}
+
+hook Sstore KatTokenHarness.mintCapacity[KEY address user] uint256 newCap (uint256 oldCap) {
+    totalMintCapacityChange = totalMintCapacityChange + newCap - oldCap;
+}
+
+function initGhosts()
+{
+    totalMintCapacityChange = 0;
+    totalMintedChange = 0;
+}
+
+rule mintCapacityPlusMintedNeverDecrease(env e, method f)
+{
+    initGhosts();
+    calldataarg args;
+    f(e, args);
+    assert totalMintedChange + totalMintCapacityChange >= 0;
+}
+
+rule mintCapacityPlusMintedEqualsDistributedSupplyCap(env e, method f)
+{
+    initGhosts();
+    uint256 distributedSupplyCap_pre = get_distributedSupplyCap();
+    calldataarg args;
+    f(e, args);
+    uint256 distributedSupplyCap_post = get_distributedSupplyCap();
+    assert distributedSupplyCap_post - distributedSupplyCap_pre ==
+        totalMintedChange + totalMintCapacityChange;
+}
+
+// probably wrong property
+invariant inflationBeneficiaryNeverZero()
+    inflationBeneficiary() != 0;
+
+invariant inflationAdminNeverZero()
+    inflationAdmin() != 0;

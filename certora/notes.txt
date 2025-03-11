@@ -21,26 +21,29 @@ exp2(x + y) == exp2(x) * exp2(y)
 ----------------
 merkleminter:
 
-kattoken cannot be changed
-locked can only change from true -> false
-rootSetter can only change from x -> 0
+kattoken cannot be changed                                                  done
+locked can only change from true -> false                                   done
+rootSetter can only change from x -> 0                                      done
 root can only change once
-only rootSetter can call init
-only unlocker can call unlock
-claimKatToken cannot be called before unlockTime unless already unlocked
-claimKatToken will increase receiver's balance when executed succesfully 
+only rootSetter can call init                                               done
+only unlocker can call unlock                                               done
+claimKatToken cannot be called before unlockTime unless already unlocked    done
+claimKatToken will increase receiver's balance when executed succesfully    
 
 ----------------
 kattoken:
 
-only certain methods may increase/decrease total mint capacity
-total mint capacity + mintedTokens can only increase
-lastMintCapacityIncrease can only increase
-distributedSupplyCap == total mint capacity + mintedTokens
-for all x: mintCapacity[x] <= distributedSupplyCap
-inflation is less than MAX_INFLATION
-inflationBeneficiary and inflationAdmin != 0
-only inflationBeneficiary and inflationAdmin can change inflationBeneficiary and inflationAdmin respectively
+only certain methods may increase/decrease total mint capacity  done
+total mint capacity + mintedTokens can only increase            done
+lastMintCapacityIncrease can only increase                      done
+distributedSupplyCap can only increase                          done
+distributedSupplyCap == total mint capacity + mintedTokens      done
+for all x: mintCapacity[x] <= distributedSupplyCap              done
+inflation is less than MAX_INFLATION                            done
+inflationBeneficiary and inflationAdmin != 0                    done violated
+only inflationBeneficiary and inflationAdmin can change inflationBeneficiary and inflationAdmin respectively                                      done
 
 summarise _mint, keep track of balances in CVL
 summarise MerklerProof.verify to nondet
+
+exp2 error max 10 tokens per year

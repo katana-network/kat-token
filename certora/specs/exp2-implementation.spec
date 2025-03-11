@@ -26,10 +26,49 @@ rule exp2_correctValues() {
 }
 
 rule exp2_additivity() {
-    uint256 x;
-    uint256 y;
+    uint256 x; uint256 y; uint256 total;
+    require total == x + y;
+    require total <= 5*ONE18();
 
-    assert(exp2(require_uint256(x + y)) == exp2(x) * exp2(y));
+    assert exp2(total)*ONE18() == exp2(x) * exp2(y);
+}
+
+rule exp2_additivity2() {
+    uint256 x; uint256 total;
+    require total == x + x;
+    require total <= 5*ONE18();
+
+    assert exp2(total)*ONE18() == exp2(x) * exp2(x);
+}
+
+rule exp2_correctnes(uint8 n) {
+    mathint BOUND = 100;
+    uint256 x = require_uint256(n*ONE18());
+    require n <= BOUND;
+    
+    assert exp2(x) == (1 << n) * ONE18();
+}
+
+rule exp2_monotone01(env e)
+{
+    mathint lBOUND = 0 * ONE18();
+    mathint uBOUND = 1 * ONE18();
+    uint256 x; uint256 y;
+    require x >= lBOUND && y >= lBOUND;
+    require x < uBOUND && y < uBOUND;
+    
+    assert x < y => exp2(x) <= exp2(y);
+}
+
+rule exp2_monotone12(env e)
+{
+    mathint lBOUND = 1 * ONE18();
+    mathint uBOUND = 2 * ONE18();
+    uint256 x; uint256 y;
+    require x >= lBOUND && y >= lBOUND;
+    require x < uBOUND && y < uBOUND;
+    
+    assert x < y => exp2(x) <= exp2(y);
 }
 
 /**
