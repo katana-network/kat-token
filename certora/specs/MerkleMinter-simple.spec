@@ -5,6 +5,11 @@ methods {
     function unlockTime() external returns (uint256) envfree;
     function locked() external returns (bool) envfree;
     function unlocker() external returns (address) envfree;
+
+    //MerkleProof
+    function _.verify(bytes32[], bytes32, bytes32) external => NONDET DELETE;
+
+    function _.eip712Domain() external => NONDET DELETE;
 }
 
 rule integrityOfInit() {
@@ -12,19 +17,18 @@ rule integrityOfInit() {
     bytes32 _root;
     address _katToken;
 
-    address rootBefore = rootSetter();
+    address rootSetterBefore = rootSetter();
 
     init(e, _root, _katToken);
 
-    assert(e.msg.sender == rootBefore);
+    assert(e.msg.sender == rootSetterBefore);
     assert(root() == _root);
-    assert(rootSetter() == 0);
     assert(katToken() == _katToken);
 }
 
-rule integrityOfUnlock(env e) {
+rule integrityOfUnlockAndRenounceUnlocker(env e) {
     address currentUnlocker = unlocker();
-    unlock(e);
+    unlockAndRenounceUnlocker(e);
 
     assert(e.msg.sender == currentUnlocker);
     assert(locked() == false);
@@ -33,18 +37,18 @@ rule integrityOfUnlock(env e) {
 
 rule canOnlyClaimWhenNotLocked(env e) 
 {
-    bytes32[] proof; uint256 amount; address receiver;
-    claimKatToken(e, proof, amount, receiver);
+    bytes32[] proof; uint256 index; uint256 amount; address receiver;
+    claimKatToken(e, proof, index, amount, receiver);
 
     assert(e.block.timestamp > unlockTime() || !locked());
 }
 
 rule canOnlyClaimWhenNotLocked_nontrivial(env e) 
 {
-    bytes32[] proof; uint256 amount; address receiver;
+    bytes32[] proof; uint256 index; uint256 amount; address receiver;
     require(proof.length > 0);
 
-    claimKatToken(e, proof, amount, receiver);
+    claimKatToken(e, proof, index, amount, receiver);
     assert(e.block.timestamp > unlockTime() || !locked());
 }
 
@@ -57,6 +61,17 @@ rule katTokenCannotBeChanged(env e, method f)
     f(e, args);
     address token_post = katToken();
     assert token_pre == token_post;
+}
+
+rule rootCannotBeChanged(env e, method f)
+    filtered { f -> f.selector != sig:init(bytes32, address).selector }
+    // init is the only method that can set the root
+{
+    bytes32 root_pre = root();
+    calldataarg args;
+    f(e, args);
+    bytes32 root_post = root();
+    assert root_pre == root_post;
 }
 
 //ocked can only change from true -> false

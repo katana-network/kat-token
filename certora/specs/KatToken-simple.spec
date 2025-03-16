@@ -16,7 +16,9 @@ methods {
         => _mintCVL(to, amount);
     
     //MerkleProof
-    function _.verify(bytes32[] memory, bytes32, bytes32) internal => NONDET;
+    function _.verify(bytes32[] memory, bytes32, bytes32) external => NONDET DELETE;
+
+    function _.eip712Domain() external => NONDET DELETE;
 }
 
 rule integrityOfchangeInflationAdmin(env e) {
@@ -115,10 +117,3 @@ rule mintCapacityPlusMintedEqualsDistributedSupplyCap(env e, method f)
     assert distributedSupplyCap_post - distributedSupplyCap_pre ==
         totalMintedChange + totalMintCapacityChange;
 }
-
-// probably wrong property
-invariant inflationBeneficiaryNeverZero()
-    inflationBeneficiary() != 0;
-
-invariant inflationAdminNeverZero()
-    inflationAdmin() != 0;

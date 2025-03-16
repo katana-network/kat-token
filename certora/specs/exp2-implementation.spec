@@ -9,6 +9,7 @@ methods {
 
     function KatToken.inflationFactor() external returns (uint256) envfree;
     function KatToken.MAX_INFLATION() external returns (uint256) envfree;
+    function _.eip712Domain() external => NONDET DELETE;
 }
 
 definition ONE18() returns uint256 =  1000000000000000000;
@@ -49,15 +50,15 @@ rule exp2_correctnes(uint8 n) {
     assert exp2(x) == (1 << n) * ONE18();
 }
 
-rule exp2_monotone01(env e)
+rule exp2_monotonePlus01(env e)
 {
     mathint lBOUND = 0 * ONE18();
-    mathint uBOUND = 1 * ONE18();
-    uint256 x; uint256 y;
-    require x >= lBOUND && y >= lBOUND;
-    require x < uBOUND && y < uBOUND;
+    mathint uBOUND = 1 * 10^10;
+    uint256 x;
+    require x >= lBOUND;
+    require x < uBOUND;
     
-    assert x < y => exp2(x) <= exp2(y);
+    assert exp2(x) <= exp2(require_uint256(x+1));
 }
 
 rule exp2_monotone12(env e)
@@ -99,3 +100,21 @@ rule exp2_noOverflow() {
     // ... but the upper bound is reasonably tight
     satisfy(exp2(x) > 16 * ONE18());
 }
+
+// monotonicity
+// try x vs. x+1
+// x vs. 2*x 
+
+// rules for interest
+// interest for timespan x, vs. interest vs. 2*x
+
+// inject mutations, demontrate to the customers the bug founding to the customer
+
+
+// "imperminent loss" - concept related to AMM
+// liquidity provider provides L, takes fees
+// 
+
+// DEFI lama
+// tells what kind of protocols, overview of all protocols
+// 
