@@ -26,6 +26,7 @@ rule integrityOfchangeInflationAdmin(env e) {
     address newOwner;
 
     changeInflationAdmin(e, newOwner);
+    acceptInflationAdmin(e);
 
     assert(e.msg.sender == oldOwner);
     assert(inflationAdmin() == newOwner);
