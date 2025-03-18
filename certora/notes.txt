@@ -2,48 +2,85 @@
 // questions / observations:
 MerkleMinter.claimKatToken can be called with amount = 0
 KatToken.distributeInflation: wouldn't it be better to add a check block.timestamp > lastMintCapacityIncrease at the beginning to save execution of the other commands?
-KatToken.distributeInflation: is the check on line 133 needed?
-KatToken.distributeMintCapacity are the checks on lines 144 and 145 needed?
+KatToken.distributeMintCapacity are the checks on lines 200 and 201 needed?
 KatToken.distributeMintCapacity can we use unchecked instead?
-KatToken: line 115 can't we have >= instead of > ?
-wrong comment in KatToken.distributeInflation line 132, it should be before line 129
+KatToken: line 170 can't we have >= instead of > ?
 inflationBeneficiary and inflationAdmin: wouldn't it be better to use the existing Ownable interface?
     - the new owner cannot decline
+    - it can change to the same value
 there's no check that merkleMinter is actually a MerkleMinter contract
+
+----------------------------------
+
+more questions:
+
+L/info finding:
+the MerkleMinter.init function is very dangerous because the operation can only work if the new tree respects the same indexes (i.e. append-only), which is a very strict requirement for off-chain components.
+Otherwise, there’s risk of one claiming twice if their claim is available under different indexes before and after the root update 
+
+
+L/info finding (this was discussed during the call with the team) KatToken.renounceInflationBeneficiary can be called when inflationFactor is non-zero. This will grant mint capacity to address(0) which is certainly unwanted. Fix is to require (or overwrite) inflationFactor to be zero when the inflationBeneficiary is reset
+WHY IS IT A PROBLEM?
+
 
 // properties:
 ----------------
 Powutil:
 
-exp2(x) == 2^x (or differs by at most 1e18, etc.), only for x < 1.03 * 1000 years
-exp2(x + y) == exp2(x) * exp2(y)
+exp2(x) == 2^x , formally: exp2(x *1e18) == 2^x *1e18
+exp2(x+y) == exp2(x)*exp2(y) , formally: exp2(x+y) *1e18 == exp2(x)*exp2(y) 
+exp2(x) <= exp2(x+1)
+lower and upper bounds: LB(x) <= exp2(x) <= UB(x) currently we're using bounds based on 3rd-order Taylor expansions
+ + more variants of these. With error bounds, etc.
 
 ----------------
 merkleminter:
 
-kattoken cannot be changed                                                  done
-locked can only change from true -> false                                   done
-rootSetter can only change from x -> 0                                      done
-root can only change once
-only rootSetter can call init                                               done
-only unlocker can call unlock                                               done
-claimKatToken cannot be called before unlockTime unless already unlocked    done
-claimKatToken will increase receiver's balance when executed succesfully    
+katToken and root can only change via init                                                  
+locked can only change from true -> false                                   
+rootSetter can only change from x -> 0                                      
+only rootSetter can call init                                               
+only unlocker can call unlock                                               
+all calls to claimKatToken must revert before unlockTime unless already unlocked    
+claimKatToken will increase receiver's balance when executed successfully               not written
+once active, the protocol will not go to an inactive state, i.e., (block.timestamp > unlockTime || !locked) can only change false -> true
+indexIsClaimed(index) can only change false -> true
+indexIsClaimed(index) == true => claimKatToken(..,index) will revert
 
 ----------------
-kattoken:
+katToken:
 
-only certain methods may increase/decrease total mint capacity  done
-total mint capacity + mintedTokens can only increase            done
-lastMintCapacityIncrease can only increase                      done
-distributedSupplyCap can only increase                          done
-distributedSupplyCap == total mint capacity + mintedTokens      done
-for all x: mintCapacity[x] <= distributedSupplyCap              done
-inflation is less than MAX_INFLATION                            done
-inflationBeneficiary and inflationAdmin != 0                    done violated
-only inflationBeneficiary and inflationAdmin can change inflationBeneficiary and inflationAdmin respectively                                      done
+only certain methods may increase/decrease total mint capacity  
+total mint capacity + mintedTokens can only increase            
+lastMintCapacityIncrease can only increase                      
+distributedSupplyCap can only increase                          
+distributedSupplyCap == total mint capacity + mintedTokens      
+for all x: mintCapacity[x] <= distributedSupplyCap
+mintCapacity of address(0) is always 0            
+inflation <= MAX_INFLATION    
+inflation can be set to any value <= MAX_INFLATION                         
+once renounceInflationAdmin is performed, the inflationAdmin will always be zero
+    1. show that renounceInflationAdmin sets inflationAdmin to 0
+    2. show that inflationAdmin can never change from 0 to non-zero
+the same for inflationBeneficiary
+only inflationBeneficiary can change inflationBeneficiary
+only inflationAdmin can change inflationAdmin
 
-summarise _mint, keep track of balances in CVL
-summarise MerklerProof.verify to nondet
+----------------
+more properties:
 
-exp2 error max 10 tokens per year
+KatToken.sol
+158:         require(value < MAX_INFLATION, "Inflation too large.");
+can we write a rule that shows that all values within range must succeed?
+
+given any of the privileged addresses (KatToken.inflationAdmin, KatToken.inflationBeneficiary, MerkleMinter.rootSetter), once the corresponding renounce function is called, the given privileged address must remain address(0) indefinitely
+
+mintCapacity of address(0) is always 0 ..?
+
+mutations..??
+
+any more properties?
+
+1000 year inflation -> 5e18, maybe use 10e18 instead . use this: 43e18
+
+minimum arg to exp2 is about 6M but not a multiplier of it

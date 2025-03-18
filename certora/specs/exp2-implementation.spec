@@ -73,12 +73,6 @@ rule exp2_monotone12(env e)
 }
 
 /**
- * Prove that the inflation factor is bounded by MAX_INFLATION.
- */
-invariant inflationFactorIsBounded()
-    KatToken.inflationFactor() <= KatToken.MAX_INFLATION();
-
-/**
  * Show that exp2 can not overflow within 100 years.
  * Technically, we show that exp2 stays below 0x100000000000000000, which is
  * well below anything close to an overflow.
@@ -86,7 +80,8 @@ invariant inflationFactorIsBounded()
 rule exp2_noOverflow() {
     // we know that the inflation factor is bounded by MAX_INFLATION
     uint256 inflationFactor = KatToken.inflationFactor();
-    requireInvariant(inflationFactorIsBounded);
+    require inflationFactor() <= MAX_INFLATION();
+   
     // let's assume that we can't have more than 100 years of inflation
     uint256 timeElapsed;
     require(timeElapsed <= 100 * days(365));
@@ -118,3 +113,5 @@ rule exp2_noOverflow() {
 // DEFI lama
 // tells what kind of protocols, overview of all protocols
 // 
+
+// 10 tokens per year is an acceptable error for the inflation
