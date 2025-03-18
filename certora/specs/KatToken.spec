@@ -2,7 +2,9 @@ import "./exp2-summary.spec";
 
 methods {
     function inflationAdmin() external returns (address) envfree;
+    function pendingInflationAdmin() external returns (address) envfree;
     function inflationBeneficiary() external returns (address) envfree;
+    function pendingInflationBeneficiary() external returns (address) envfree;
     function inflationFactor() external returns (uint256) envfree;
     function MAX_INFLATION() external returns (uint256) envfree;
     function merkleMinter() external returns (address) envfree;
@@ -16,7 +18,7 @@ methods {
         => _mintCVL(to, amount);
     
     //MerkleProof
-    function _.verify(bytes32[] memory, bytes32, bytes32) external => NONDET DELETE;
+    function _.verify(bytes32[], bytes32, bytes32) external => NONDET DELETE;
 
     function _.eip712Domain() external => NONDET DELETE;
 }
@@ -26,10 +28,9 @@ rule integrityOfchangeInflationAdmin(env e) {
     address newOwner;
 
     changeInflationAdmin(e, newOwner);
-    acceptInflationAdmin(e);
 
     assert(e.msg.sender == oldOwner);
-    assert(inflationAdmin() == newOwner);
+    assert(pendingInflationAdmin() == newOwner);
 }
 
 rule integrityOfchangeInflationBeneficiary(env e) {
@@ -39,10 +40,10 @@ rule integrityOfchangeInflationBeneficiary(env e) {
     changeInflationBeneficiary(e, newOwner);
 
     assert(e.msg.sender == oldOwner);
-    assert(inflationBeneficiary() == newOwner);
+    assert(pendingInflationBeneficiary() == newOwner);
 }
 
-rule lastMintCapacityIncreaseDeverDecreases(env e, method f)
+rule lastMintCapacityIncreaseNeverDecreases(env e, method f)
 {
     uint256 lastMintCapacityIncrease_pre = get_lastMintCapacityIncrease();
 
@@ -52,7 +53,7 @@ rule lastMintCapacityIncreaseDeverDecreases(env e, method f)
     assert lastMintCapacityIncrease_post >= lastMintCapacityIncrease_pre;
 }
 
-rule distributedSupplyCapDeverDecreases(env e, method f)
+rule distributedSupplyCapNeverDecreases(env e, method f)
 {
     uint256 distributedSupplyCap_pre = get_distributedSupplyCap();
 
@@ -62,8 +63,7 @@ rule distributedSupplyCapDeverDecreases(env e, method f)
     assert distributedSupplyCap_post >= distributedSupplyCap_pre;
 }
 
-rule canOnlySendAvailableMintCapacity() {
-    env e;
+rule integrityOfDistributeMintCapacity(env e) {
     address to;
     uint256 amount;
 
@@ -71,7 +71,6 @@ rule canOnlySendAvailableMintCapacity() {
     uint256 toCapacityBefore = mintCapacity(to);
 
     distributeMintCapacity(e, to, amount);
-
 
     uint256 ownCapacityAfter = mintCapacity(e.msg.sender);
     uint256 toCapacityAfter = mintCapacity(to);
@@ -118,3 +117,52 @@ rule mintCapacityPlusMintedEqualsDistributedSupplyCap(env e, method f)
     assert distributedSupplyCap_post - distributedSupplyCap_pre ==
         totalMintedChange + totalMintCapacityChange;
 }
+
+/**
+ * The inflation factor is bounded by MAX_INFLATION.
+ */
+invariant inflationFactorIsBounded()
+    inflationFactor() <= MAX_INFLATION();
+
+rule changeInflation_revertConditions(env e)
+{
+    uint256 value;
+    changeInflation@withrevert(e, value);
+    bool reverted = lastReverted;
+    assert lastReverted =>
+        e.msg.sender != inflationAdmin() ||
+        e.msg.value != 0 ||
+        value > MAX_INFLATION();
+}
+
+// once renounceInflationAdmin is performed, the inflationAdmin will always be zero
+// we've proved that renounceInflationAdmin changes it to zero so here we just prove
+// that it cannot change from 0 to non-zero
+rule inflationAdminValueChange(env e, method f)
+{
+    address admin_pre = inflationAdmin();
+    require e.msg.sender != 0;
+    calldataarg args;
+    f(e, args);
+    address admin_post = inflationAdmin();
+    assert admin_pre == 0 => admin_post == 0;
+}
+
+// once renounceInflationBeneficiary is performed, the inflationBeneficiary will always be zero
+// we've proved that renounceInflationBeneficiary changes it to zero so here we just prove
+// that it cannot change from 0 to non-zero
+rule inflationBeneficiaryValueChange(env e, method f)
+{
+    address beneficiary_pre = inflationBeneficiary();
+    require e.msg.sender != 0;
+    calldataarg args;
+    f(e, args);
+    address beneficiary_post = inflationBeneficiary();
+    assert beneficiary_pre == 0 => beneficiary_post == 0;
+}
+
+invariant mintCapacityOfZeroIsZero()
+    mintCapacity(0) == 0
+    { preserved
+        with (env e) { require e.msg.sender != 0; }
+    }

@@ -13,7 +13,7 @@ methods {
 }
 
 definition ONE18() returns uint256 =  1000000000000000000;
-definition days(uint256 d) returns uint256 = assert_uint256(d * 60 * 60 * 24);
+definition daysToSeconds(uint256 days) returns uint256 = assert_uint256(days * 60 * 60 * 24);
 
 /**
  * Show that exp2 is actually exact for some easy values.
@@ -84,8 +84,8 @@ rule exp2_noOverflow() {
    
     // let's assume that we can't have more than 100 years of inflation
     uint256 timeElapsed;
-    require(timeElapsed <= 100 * days(365));
-    uint256 x = assert_uint256((inflationFactor * timeElapsed) / days(365));
+    require(timeElapsed <= 100 * daysToSeconds(365));
+    uint256 x = assert_uint256((inflationFactor * timeElapsed) / daysToSeconds(365));
 
     // that means x can't be more than 5
     assert(x < 5 * ONE18());
