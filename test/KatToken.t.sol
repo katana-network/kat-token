@@ -108,6 +108,13 @@ contract KatTokenTest is Test, DeployScript {
         token.renounceInflationBeneficiary();
 
         vm.prank(dummyInflationBen);
+        vm.expectRevert("Inflation not zero.");
+        token.renounceInflationBeneficiary();
+        assertEq(token.inflationBeneficiary(), address(0));
+
+        vm.prank(dummyInflationAdmin);
+        token.changeInflation(0);
+        vm.prank(dummyInflationBen);
         token.renounceInflationBeneficiary();
         assertEq(token.inflationBeneficiary(), address(0));
     }

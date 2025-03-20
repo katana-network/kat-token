@@ -125,6 +125,7 @@ contract KatToken is ERC20Permit {
     function renounceInflationBeneficiary() external {
         require(msg.sender == inflationBeneficiary, "Not role owner.");
         require(pendingInflationBeneficiary == address(0), "Role transfer in progress.");
+        require(inflationFactor == 0, "Inflation not zero.");
         inflationBeneficiary = address(0);
         emit InflationBeneficiaryChanged(address(0), false);
     }
@@ -158,6 +159,7 @@ contract KatToken is ERC20Permit {
     function changeInflation(uint256 value) external {
         require(msg.sender == inflationAdmin, "Not role owner.");
         require(value <= MAX_INFLATION, "Inflation too large.");
+        require(inflationBeneficiary != address(0), "No inflation beneficiary.");
         distributeInflation();
         uint256 oldValue = inflationFactor;
         inflationFactor = value;
