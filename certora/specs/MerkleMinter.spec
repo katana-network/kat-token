@@ -121,3 +121,24 @@ rule cannotClaimTheIndexTwice(env e)
 
     assert isClaimed => reverted;
 }
+
+// init cannot be called after the minter is unlocked i.e., after ((block.timestamp > unlockTime) || !locked)
+// otherwise some claims could already have happened with a different root
+rule cannotInitAfterUnlocked(env e)
+{
+    bool active = (e.block.timestamp > unlockTime()) || !locked();
+    
+    bytes32 _root;
+    address _katToken;
+    init(e, _root, _katToken);
+    assert !active; // if active, we shouldn't get here as the method shoud revert
+}
+
+// It should not be possible to permanently renounce the rootSetter role without actually setting the root first
+// We showed that rootSetter cannot change from address(0) to non-zero,
+// so here we just prove that it's not possible to have rootSetter == 0 && root == 0
+invariant rootCanAlwaysBeSet()
+    !(rootSetter() == 0 && root() == to_bytes32(0))
+    { preserved
+        with (env e) { require e.msg.sender != 0; }
+    }

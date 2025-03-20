@@ -46,25 +46,29 @@ claimKatToken will increase receiver's balance when executed successfully       
 once active, the protocol will not go to an inactive state, i.e., (block.timestamp > unlockTime || !locked) can only change false -> true
 indexIsClaimed(index) can only change false -> true
 indexIsClaimed(index) == true => claimKatToken(..,index) will revert
+init cannot be called after the minter is unlocked i.e., after ((block.timestamp > unlockTime) || !locked)
+It should not be possible to permanently renounce the rootSetter role without actually setting the root first
 
 ----------------
 katToken:
 
 only certain methods may increase/decrease total mint capacity  
-total mint capacity + mintedTokens can only increase            
-lastMintCapacityIncrease can only increase                      
-distributedSupplyCap can only increase                          
-distributedSupplyCap == total mint capacity + mintedTokens      
-for all x: mintCapacity[x] <= distributedSupplyCap
-mintCapacity of address(0) is always 0            
-inflation <= MAX_INFLATION    
-inflation can be set to any value <= MAX_INFLATION                         
+total mint capacity + mintedTokens can only increase                                w
+lastMintCapacityIncrease can only increase                                          w              
+distributedSupplyCap can only increase                                              w                    
+distributedSupplyCap == total mint capacity + mintedTokens                          w   
+for all x: mintCapacity[x] <= distributedSupplyCap                              xx
+mintCapacity of address(0) is always 0                                              w
+inflation <= MAX_INFLATION                                                          w
+inflation can be set to any value <= MAX_INFLATION                                  w
 once renounceInflationAdmin is performed, the inflationAdmin will always be zero
     1. show that renounceInflationAdmin sets inflationAdmin to 0
-    2. show that inflationAdmin can never change from 0 to non-zero
+    2. show that inflationAdmin can never change from 0 to non-zero                 w
 the same for inflationBeneficiary
-only inflationBeneficiary can change inflationBeneficiary
-only inflationAdmin can change inflationAdmin
+    1. show that renounceInflationAdmin sets inflationBeneficiary to 0
+    2. show that inflationBeneficiary can never change from 0 to non-zero           w
+only inflationBeneficiary can change inflationBeneficiary                           w
+only inflationAdmin can change inflationAdmin                                       w
 
 ----------------
 more properties:
@@ -74,8 +78,6 @@ KatToken.sol
 can we write a rule that shows that all values within range must succeed?
 
 given any of the privileged addresses (KatToken.inflationAdmin, KatToken.inflationBeneficiary, MerkleMinter.rootSetter), once the corresponding renounce function is called, the given privileged address must remain address(0) indefinitely
-
-mintCapacity of address(0) is always 0 ..?
 
 mutations..??
 

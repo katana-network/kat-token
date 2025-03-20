@@ -135,6 +135,26 @@ rule changeInflation_revertConditions(env e)
         value > MAX_INFLATION();
 }
 
+rule integrityOfRenounceInflationAdmin(env e, method f)
+{
+    address admin_pre = inflationAdmin();
+    renounceInflationAdmin(e);
+    address admin_post = inflationAdmin();
+
+    assert admin_pre == e.msg.sender;
+    assert admin_post == 0;
+}
+
+rule integrityOfRenounceInflationBeneficiary(env e, method f)
+{
+    address beneficiary_pre = inflationBeneficiary();
+    renounceInflationBeneficiary(e);
+    address beneficiary_post = inflationBeneficiary();
+
+    assert beneficiary_pre == e.msg.sender;
+    assert beneficiary_post == 0;
+}
+
 // once renounceInflationAdmin is performed, the inflationAdmin will always be zero
 // we've proved that renounceInflationAdmin changes it to zero so here we just prove
 // that it cannot change from 0 to non-zero
