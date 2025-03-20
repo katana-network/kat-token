@@ -9,7 +9,7 @@ contract InflationTest is Test, DeployScript {
     KatToken token;
     uint256 one_inflation = 0.01435529297707004e18;
     uint256 two_inflation = 0.02856915219677089e18;
-    uint256 three_inflation = 0.04264433740849368e18;
+    uint256 three_inflation = 0.04264433740849369e18;
 
     uint256 decimals;
 
@@ -32,7 +32,7 @@ contract InflationTest is Test, DeployScript {
         vm.startPrank(dummyInflationAdmin);
         uint256 max_inflation = token.MAX_INFLATION();
         vm.expectRevert("Inflation too large.");
-        token.changeInflation(max_inflation);
+        token.changeInflation(max_inflation + 1);
 
         vm.expectRevert("Inflation too large.");
         token.changeInflation(three_inflation + 10);
