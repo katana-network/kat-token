@@ -52,6 +52,12 @@ contract KatTokenTest is Test, DeployScript {
         vm.prank(alice);
         vm.expectRevert("Not role owner.");
         token.renounceInflationAdmin();
+
+        vm.prank(dummyInflationAdmin);
+        token.changeInflationAdmin(alice);
+        vm.expectRevert("Role transfer in progress.");
+        token.renounceInflationAdmin();
+
         vm.prank(dummyInflationAdmin);
         token.renounceInflationAdmin();
         assertEq(token.inflationAdmin(), address(0));
@@ -95,6 +101,12 @@ contract KatTokenTest is Test, DeployScript {
         vm.prank(alice);
         vm.expectRevert("Not role owner.");
         token.renounceInflationBeneficiary();
+
+        vm.prank(dummyInflationBen);
+        token.changeInflationBeneficiary(alice);
+        vm.expectRevert("Role transfer in progress.");
+        token.renounceInflationBeneficiary();
+
         vm.prank(dummyInflationBen);
         token.renounceInflationBeneficiary();
         assertEq(token.inflationBeneficiary(), address(0));
