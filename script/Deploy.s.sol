@@ -31,22 +31,17 @@ contract DeployScript is Script {
         address _rootSetter,
         uint256 _unlockDelay
     ) public returns (KatToken katToken, MerkleMinter merkleMinter) {
-        address _merkleMinter = vm.computeCreate2Address(
-            salt,
-            keccak256(bytes.concat(type(MerkleMinter).creationCode, abi.encode(_unlockDelay, _unlocker, _rootSetter)))
-        );
-        // string memory name,
-        // string memory symbol,
-        // address inflation_admin,
-        // address inflation_beneficiary,
-        // address _merkleMinter
-        katToken = new KatToken{salt: salt}("KatToken", "KAT", _inflation_admin, _inflation_ben, _merkleMinter);
         // uint256 _unlockTime
         // address _unlocker
         // address _rootSetter
         merkleMinter = new MerkleMinter{salt: salt}(_unlockDelay, _unlocker, _rootSetter);
 
-        assert(address(merkleMinter) == _merkleMinter);
+        // string memory name,
+        // string memory symbol,
+        // address inflation_admin,
+        // address inflation_beneficiary,
+        // address _merkleMinter
+        katToken = new KatToken{salt: salt}("KatToken", "KAT", _inflation_admin, _inflation_ben, address(merkleMinter));
     }
 
     function deployDummyToken() public returns (KatToken katToken) {
