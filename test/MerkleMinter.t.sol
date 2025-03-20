@@ -39,6 +39,12 @@ contract MerkleMinterTest is Test, DeployScript {
         merkleMinter.init(root, dummyToken);
     }
 
+    function test_root_setter_no_root() public {
+        vm.prank(dummyRootSetter);
+        vm.expectRevert("No root set.");
+        merkleMinter.renounceRootSetter();
+    }
+
     function test_root_setter() public {
         vm.prank(dummyRootSetter);
         merkleMinter.init(root, dummyToken);
