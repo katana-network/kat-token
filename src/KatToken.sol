@@ -184,14 +184,14 @@ contract KatToken is ERC20Permit {
      * Fully realizes newly available inflation as mint capacity to the INFLATION_BENEFICIARY
      */
     function distributeInflation() public {
+        // Check if we are in the before inflation period so we don't override lastMintCapacityIncrease
+        if (lastMintCapacityIncrease > block.timestamp) {
+            return;
+        }
         uint256 inflation = _calcInflation();
         distributedSupplyCap += inflation;
-        // give increase to INFLATION_BENEFICIARY
         mintCapacity[inflationBeneficiary] += inflation;
-        // increase distributedSupplyCap
-        if (block.timestamp > lastMintCapacityIncrease) {
-            lastMintCapacityIncrease = block.timestamp;
-        }
+        lastMintCapacityIncrease = block.timestamp;
         emit InflationDistributed(inflationBeneficiary, inflation);
     }
 
