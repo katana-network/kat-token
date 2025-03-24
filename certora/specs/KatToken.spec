@@ -129,7 +129,7 @@ rule changeInflation_revertConditions(env e)
     uint256 value;
     changeInflation@withrevert(e, value);
     bool reverted = lastReverted;
-    assert lastReverted =>
+    assert reverted =>
         e.msg.sender != inflationAdmin() ||
         e.msg.value != 0 ||
         value > MAX_INFLATION();

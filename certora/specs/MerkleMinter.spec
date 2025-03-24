@@ -134,9 +134,35 @@ rule cannotInitAfterUnlocked(env e)
     assert !active; // if active, we shouldn't get here as the method shoud revert
 }
 
+rule cannotChangeRootWhenRootSetterIsZero(env e, method f)
+{
+    bytes32 root_pre = root();
+    address rootSetter_pre = rootSetter();
+    require e.msg.sender != 0;
+    calldataarg args;
+    f(e, args);
+    bytes32 root_post = root();
+
+    assert rootSetter_pre == 0 => root_post == root_pre;
+}
+
+rule rootCanBeChanged(env e)
+{
+    bytes32 root_pre = root();
+    bytes32 _root; address _katToken;
+    init(e, _root, _katToken);
+    
+    bytes32 root_post = root();
+    satisfy root_pre != root_post;
+}
+
 // It should not be possible to permanently renounce the rootSetter role without actually setting the root first
-// We showed that rootSetter cannot change from address(0) to non-zero,
+// We showed that 
+// 1. root can be changed
+// 2. root root cannot change when rootSetter == address(0)
+// 3. rootSetter cannot change from address(0) to non-zero,
 // so here we just prove that it's not possible to have rootSetter == 0 && root == 0
+// that would already indicate an unrecoverable state
 invariant rootCanAlwaysBeSet()
     !(rootSetter() == 0 && root() == to_bytes32(0))
     { preserved

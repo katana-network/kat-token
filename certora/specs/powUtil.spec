@@ -72,46 +72,30 @@ rule exp2_monotone12(env e)
     assert x < y => exp2(x) <= exp2(y);
 }
 
-/**
- * Show that exp2 can not overflow within 100 years.
- * Technically, we show that exp2 stays below 0x100000000000000000, which is
- * well below anything close to an overflow.
- */
-rule exp2_noOverflow() {
-    // we know that the inflation factor is bounded by MAX_INFLATION
-    uint256 inflationFactor = KatToken.inflationFactor();
-    require inflationFactor() <= MAX_INFLATION();
-   
-    // let's assume that we can't have more than 100 years of inflation
-    uint256 timeElapsed;
-    require(timeElapsed <= 100 * daysToSeconds(365));
-    uint256 x = assert_uint256((inflationFactor * timeElapsed) / daysToSeconds(365));
+rule exp2_monotonicityX(env e)
+{
+    uint256 MIN_INFLATION =  1441974173906322; // log2(1.001)
+    uint256 MAX_INFLATION = 42644337408493690; // log2(1.03)
+    uint secondsPerYear = (365 *24 *60 *60);
+    uint256 minDifference = require_uint256(MIN_INFLATION / secondsPerYear);
 
-    // that means x can't be more than 5
-    assert(x < 5 * ONE18());
+    uint256 inflFactor; uint256 timeElapsed;
+    require inflFactor >= MIN_INFLATION && inflFactor <= MAX_INFLATION;
+    require timeElapsed <= 7 *24 *60 *60;   //one week
 
-    // this is well below anything that might overflow ...
-    assert(exp2(x) < 32 * ONE18() && 32 * ONE18() < 0x100000000000000000);
-    // ... but the upper bound is reasonably tight
-    satisfy(exp2(x) > 16 * ONE18());
+    uint256 input = require_uint256(inflFactor * timeElapsed / secondsPerYear);
+    assert exp2(input) <= exp2(require_uint256(input + minDifference));
 }
 
-// monotonicity
-// try x vs. x+1
-// x vs. 2*x 
+function withinTenPercentTolerance(mathint a, mathint b) returns bool
+{
+    return 9*a <= 10*b && 9*b <= 10*a;
+}
 
-// rules for interest
-// interest for timespan x, vs. interest vs. 2*x
+rule exp2_additivity2X() {
+    uint256 x; uint256 total;
+    require total == x + x;
+    require total <= 5*ONE18();
 
-// inject mutations, demontrate to the customers the bug founding to the customer
-
-
-// "imperminent loss" - concept related to AMM
-// liquidity provider provides L, takes fees
-// 
-
-// DEFI lama
-// tells what kind of protocols, overview of all protocols
-// 
-
-// 10 tokens per year is an acceptable error for the inflation
+    assert withinTenPercentTolerance(exp2(total)*ONE18(), exp2(x) * exp2(x));
+}

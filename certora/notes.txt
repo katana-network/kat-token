@@ -60,7 +60,11 @@ distributedSupplyCap == total mint capacity + mintedTokens                      
 for all x: mintCapacity[x] <= distributedSupplyCap                              xx
 mintCapacity of address(0) is always 0                                              w
 inflation <= MAX_INFLATION                                                          w
-inflation can be set to any value <= MAX_INFLATION                                  w
+inflation can be set to any value <= MAX_INFLATION       
+    if value <= MAX_INFLATION then "satisfy" inflation == value
+    forall v satisfy 
+    
+                           w
 once renounceInflationAdmin is performed, the inflationAdmin will always be zero
     1. show that renounceInflationAdmin sets inflationAdmin to 0
     2. show that inflationAdmin can never change from 0 to non-zero                 w
@@ -86,3 +90,8 @@ any more properties?
 1000 year inflation -> 5e18, maybe use 10e18 instead . use this: 43e18
 
 minimum arg to exp2 is about 6M but not a multiplier of it
+
+
+during the handover
+
+show a simple but powerful rule, show mutation
