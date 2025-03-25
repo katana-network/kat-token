@@ -52,6 +52,21 @@ contract KatTokenTest is Test, DeployScript {
         vm.prank(alice);
         vm.expectRevert("Not role owner.");
         token.renounceInflationAdmin();
+
+        vm.prank(dummyInflationAdmin);
+        token.renounceInflationAdmin();
+        assertEq(token.inflationAdmin(), address(0));
+    }
+
+    function test_renounce_inflation_admin_inprogress() public {
+        vm.prank(dummyInflationAdmin);
+        token.changeInflationAdmin(alice);
+        vm.prank(dummyInflationAdmin);
+        vm.expectRevert("Role transfer in progress.");
+        token.renounceInflationAdmin();
+
+        vm.prank(dummyInflationAdmin);
+        token.changeInflationAdmin(address(0));
         vm.prank(dummyInflationAdmin);
         token.renounceInflationAdmin();
         assertEq(token.inflationAdmin(), address(0));
@@ -95,6 +110,30 @@ contract KatTokenTest is Test, DeployScript {
         vm.prank(alice);
         vm.expectRevert("Not role owner.");
         token.renounceInflationBeneficiary();
+
+        vm.prank(dummyInflationBen);
+        vm.expectRevert("Inflation not zero.");
+        token.renounceInflationBeneficiary();
+
+        vm.prank(dummyInflationAdmin);
+        token.changeInflation(0);
+        vm.prank(dummyInflationBen);
+        token.renounceInflationBeneficiary();
+        assertEq(token.inflationBeneficiary(), address(0));
+    }
+
+    function test_renounce_inflation_beneficiary_inprogress() public {
+        vm.prank(dummyInflationAdmin);
+        token.changeInflation(0);
+
+        vm.prank(dummyInflationBen);
+        token.changeInflationBeneficiary(alice);
+        vm.expectRevert("Role transfer in progress.");
+        vm.prank(dummyInflationBen);
+        token.renounceInflationBeneficiary();
+
+        vm.prank(dummyInflationBen);
+        token.changeInflationBeneficiary(address(0));
         vm.prank(dummyInflationBen);
         token.renounceInflationBeneficiary();
         assertEq(token.inflationBeneficiary(), address(0));
