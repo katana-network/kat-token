@@ -26,7 +26,7 @@ contract KatToken is ERC20Permit {
     // Inflation Factor, only relevant 4 years after deployment
     uint256 public inflationFactor;
     // Maximum configurable inflation (3% annually)
-    uint256 public constant MAX_INFLATION = 0.04264433740849369e18; // log2(1.03)
+    uint256 public constant MAX_INFLATION = 0.042644337408493685e18; // log2(1.03)
 
     // Address of the merkle minter, that holds all initial mint capacity
     address public immutable merkleMinter;
@@ -60,7 +60,7 @@ contract KatToken is ERC20Permit {
         inflationBeneficiary = _inflationBeneficiary;
 
         // Set initial inflation after 4 years
-        inflationFactor = 0.02856915219677089e18; // log2(1.02)
+        inflationFactor = 0.028569152196770894e18; // log2(1.02)
 
         merkleMinter = _merkleMinter;
     }

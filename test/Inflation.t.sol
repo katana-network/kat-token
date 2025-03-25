@@ -7,9 +7,9 @@ import "../script/Deploy.s.sol";
 
 contract InflationTest is Test, DeployScript {
     KatToken token;
-    uint256 one_inflation = 0.01435529297707004e18;
-    uint256 two_inflation = 0.02856915219677089e18;
-    uint256 three_inflation = 0.04264433740849369e18;
+    uint256 one_inflation = 0.014355292977070041e18;
+    uint256 two_inflation = 0.028569152196770894e18;
+    uint256 three_inflation = 0.042644337408493685e18;
 
     uint256 decimals;
 
