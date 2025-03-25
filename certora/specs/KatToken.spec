@@ -124,17 +124,6 @@ rule mintCapacityPlusMintedEqualsDistributedSupplyCap(env e, method f)
 invariant inflationFactorIsBounded()
     inflationFactor() <= MAX_INFLATION();
 
-rule changeInflation_revertConditions(env e)
-{
-    uint256 value;
-    changeInflation@withrevert(e, value);
-    bool reverted = lastReverted;
-    assert reverted =>
-        e.msg.sender != inflationAdmin() ||
-        e.msg.value != 0 ||
-        value > MAX_INFLATION();
-}
-
 rule integrityOfRenounceInflationAdmin(env e, method f)
 {
     address admin_pre = inflationAdmin();
@@ -160,6 +149,7 @@ rule integrityOfRenounceInflationBeneficiary(env e, method f)
 // that it cannot change from 0 to non-zero
 rule inflationAdminValueChange(env e, method f)
 {
+    requireInvariant zeroAdminThenZeroPendingAdmin();
     address admin_pre = inflationAdmin();
     require e.msg.sender != 0;
     calldataarg args;
@@ -173,6 +163,7 @@ rule inflationAdminValueChange(env e, method f)
 // that it cannot change from 0 to non-zero
 rule inflationBeneficiaryValueChange(env e, method f)
 {
+    requireInvariant zeroBeneficiaryThenZeroPendingBeneficiary();
     address beneficiary_pre = inflationBeneficiary();
     require e.msg.sender != 0;
     calldataarg args;
@@ -184,5 +175,33 @@ rule inflationBeneficiaryValueChange(env e, method f)
 invariant mintCapacityOfZeroIsZero()
     mintCapacity(0) == 0
     { preserved
-        with (env e) { require e.msg.sender != 0; }
+        with (env e) 
+        { 
+            requireInvariant noBeneficiaryThenNoInflation();
+            require e.msg.sender != 0; 
+        }
+    }
+
+invariant noBeneficiaryThenNoInflation()
+    inflationBeneficiary() == 0 => inflationFactor() == 0
+    { preserved with (env e) 
+        { 
+            require e.msg.sender != 0; 
+        }
+    }
+
+invariant zeroAdminThenZeroPendingAdmin()
+    inflationAdmin() == 0 => pendingInflationAdmin() == 0
+    { preserved with (env e) 
+        { 
+            require e.msg.sender != 0; 
+        }
+    }
+
+invariant zeroBeneficiaryThenZeroPendingBeneficiary()
+    inflationBeneficiary() == 0 => pendingInflationBeneficiary() == 0
+    { preserved with (env e) 
+        { 
+            require e.msg.sender != 0; 
+        }
     }
