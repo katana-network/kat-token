@@ -33,18 +33,27 @@ contract KatToken is ERC20Permit {
     // Mint capacity distributed after the inflation starts
     mapping(address => uint256) public mintCapacity;
 
+    uint256 public immutable unlockTime;
+    bool public locked = true;
+    address public unlocker;
+
     constructor(
         string memory _name,
         string memory _symbol,
         address _inflationAdmin,
         address _inflationBeneficiary,
-        address _merkleMinter
+        address _merkleMinter,
+        uint256 _unlockTime,
+        address _unlocker
     ) ERC20(_name, _symbol) ERC20Permit(_name) {
         require(bytes(_name).length != 0);
         require(bytes(_symbol).length != 0);
         require(_inflationAdmin != address(0));
         require(_inflationBeneficiary != address(0));
         require(_merkleMinter != address(0));
+        require(_unlockTime > block.timestamp);
+        // Unlock at most 24 months in the future
+        require(_unlockTime < block.timestamp + 24 * 30 days);
 
         // Initial cap is 10 billion
         uint256 initialDistribution = 10_000_000_000 * (10 ** decimals());
@@ -63,6 +72,9 @@ contract KatToken is ERC20Permit {
         inflationFactor = 0.028569152196770894e18; // log2(1.02)
 
         merkleMinter = _merkleMinter;
+
+        unlockTime = _unlockTime;
+        unlocker = _unlocker;
     }
 
     /**
@@ -131,7 +143,22 @@ contract KatToken is ERC20Permit {
     }
 
     /**
-     * No separate mint function, just mintTo self if needed
+     * Unlocks the claim function early, afterwards contract can't be locked again
+     * Can be used after unlock to clean unlocker variable
+     */
+    function unlockAndRenounceUnlocker() external {
+        require(msg.sender == unlocker, "Not unlocker.");
+        locked = false;
+        unlocker = address(0);
+    }
+
+    function isLocked() public view returns (bool) {
+        // do a fail fast check on time first, then storage slot, this makes transfer cheap again after the time unlock
+        return (block.timestamp > unlockTime) || !locked;
+    }
+
+    /**
+     * Mint within confines of mint capacity
      * @param to Receiver of the newly minted tokens
      * @param amount Amount to be minted
      */
@@ -206,5 +233,12 @@ contract KatToken is ERC20Permit {
         mintCapacity[msg.sender] -= amount;
         mintCapacity[to] += amount;
         emit MintCapacityDistributed(msg.sender, to, amount);
+    }
+
+    function _update(address from, address to, uint256 amount) internal override {
+        if (isLocked()) {
+            revert("Token locked.");
+        }
+        super._update(from, to, amount);
     }
 }
