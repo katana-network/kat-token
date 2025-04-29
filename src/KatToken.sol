@@ -28,8 +28,6 @@ contract KatToken is ERC20Permit {
     // Maximum configurable inflation (3% annually)
     uint256 public constant MAX_INFLATION = 0.042644337408493685e18; // log2(1.03)
 
-    // Address of the merkle minter, that holds all initial mint capacity
-    address public immutable merkleMinter;
     // Mint capacity distributed after the inflation starts
     mapping(address => uint256) public mintCapacity;
 
@@ -42,7 +40,7 @@ contract KatToken is ERC20Permit {
         string memory _symbol,
         address _inflationAdmin,
         address _inflationBeneficiary,
-        address _merkleMinter,
+        address _foundation,
         uint256 _unlockTime,
         address _unlocker
     ) ERC20(_name, _symbol) ERC20Permit(_name) {
@@ -50,14 +48,14 @@ contract KatToken is ERC20Permit {
         require(bytes(_symbol).length != 0);
         require(_inflationAdmin != address(0));
         require(_inflationBeneficiary != address(0));
-        require(_merkleMinter != address(0));
+        require(_foundation != address(0));
         require(_unlockTime > block.timestamp);
         // Unlock at most 24 months in the future
         require(_unlockTime < block.timestamp + 24 * 30 days);
 
         // Initial cap is 10 billion
         uint256 initialDistribution = 10_000_000_000 * (10 ** decimals());
-        mintCapacity[_merkleMinter] = initialDistribution;
+        mintCapacity[_foundation] = initialDistribution;
         distributedSupplyCap = initialDistribution;
 
         // set to start of supply increase, 4 years after deployment
@@ -70,8 +68,6 @@ contract KatToken is ERC20Permit {
 
         // Set initial inflation after 4 years
         inflationFactor = 0.028569152196770894e18; // log2(1.02)
-
-        merkleMinter = _merkleMinter;
 
         unlockTime = _unlockTime;
         unlocker = _unlocker;
