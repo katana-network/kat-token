@@ -15,3 +15,11 @@ docs/
 
 dependencies/
 node_modules/
+
+# Certora files
+.certora_internal/
+.venv/
+emv-*-certora-*
+package-lock.json
+remappings.txt
+soldeer.lock
