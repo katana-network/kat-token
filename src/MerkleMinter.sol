@@ -39,6 +39,7 @@ contract MerkleMinter {
      */
     function init(bytes32 _root, address _katToken) external {
         require(msg.sender == rootSetter, "Not rootSetter.");
+        require(((block.timestamp < unlockTime) && locked), "Minter not locked.");
         root = _root;
         katToken = KatToken(_katToken);
     }
@@ -48,6 +49,7 @@ contract MerkleMinter {
      */
     function renounceRootSetter() external {
         require(msg.sender == rootSetter, "Not rootSetter.");
+        require(root != "", "No root set.");
         rootSetter = address(0);
     }
 
@@ -56,6 +58,7 @@ contract MerkleMinter {
      */
     function unlockAndRenounceUnlocker() external {
         require(msg.sender == unlocker, "Not unlocker.");
+        require(root != "", "No root set.");
         locked = false;
         unlocker = address(0);
     }

@@ -39,6 +39,12 @@ contract MerkleMinterTest is Test, DeployScript {
         merkleMinter.init(root, dummyToken);
     }
 
+    function test_root_setter_no_root() public {
+        vm.prank(dummyRootSetter);
+        vm.expectRevert("No root set.");
+        merkleMinter.renounceRootSetter();
+    }
+
     function test_root_setter() public {
         vm.prank(dummyRootSetter);
         merkleMinter.init(root, dummyToken);
@@ -49,44 +55,66 @@ contract MerkleMinterTest is Test, DeployScript {
         assertEq(merkleMinter.rootSetter(), address(0));
     }
 
-    function test_root_setter_twice() public {
+    function test_root_setter_twice_not_setter() public {
         vm.prank(dummyRootSetter);
         merkleMinter.init(root, dummyToken);
         vm.expectRevert("Not rootSetter.");
         merkleMinter.init(root, dummyToken);
     }
 
-    function test_unlock_early_claim() public {
+    function test_root_setter_timing() public {
+        vm.prank(dummyRootSetter);
+        merkleMinter.init(root, dummyToken);
+        vm.warp(dummyUnlockTime);
+        vm.prank(dummyRootSetter);
+        vm.expectRevert("Minter not locked.");
+        merkleMinter.init(root, dummyToken);
+    }
+
+    function test_root_setter_unlocked() public {
+        vm.prank(dummyRootSetter);
+        merkleMinter.init(root, dummyToken);
         vm.prank(dummyUnlocker);
         merkleMinter.unlockAndRenounceUnlocker();
         vm.prank(dummyRootSetter);
+        vm.expectRevert("Minter not locked.");
+        merkleMinter.init(root, dummyToken);
+    }
+
+    function test_unlock_early_claim() public {
+        vm.prank(dummyUnlocker);
+        vm.expectRevert("No root set.");
+        merkleMinter.unlockAndRenounceUnlocker();
+        vm.prank(dummyRootSetter);
         merkleMinter.init(root, makeAddr("dummyToken"));
+        vm.prank(dummyUnlocker);
+        merkleMinter.unlockAndRenounceUnlocker();
         vm.expectCall(dummyToken, abi.encodeCall(KatToken.mintTo, (claimer1, amount1)));
         vm.mockCall(dummyToken, abi.encodeCall(KatToken.mintTo, (claimer1, amount1)), "");
         merkleMinter.claimKatToken(proof1, index1, amount1, claimer1);
     }
 
     function test_unlock_time_claim() public {
-        vm.warp(dummyUnlockTime + 1);
         vm.prank(dummyRootSetter);
         merkleMinter.init(root, dummyToken);
+        vm.warp(dummyUnlockTime + 1);
         vm.expectCall(dummyToken, abi.encodeCall(KatToken.mintTo, (claimer2, amount2)));
         vm.mockCall(dummyToken, abi.encodeCall(KatToken.mintTo, (claimer2, amount2)), "");
         merkleMinter.claimKatToken(proof2, index2, amount2, claimer2);
     }
 
     function test_claim_bad_proof() public {
-        vm.warp(dummyUnlockTime + 1);
         vm.prank(dummyRootSetter);
         merkleMinter.init(root, dummyToken);
+        vm.warp(dummyUnlockTime + 1);
         vm.expectRevert("Proof failed");
         merkleMinter.claimKatToken(proof1, index2, amount2, claimer2);
     }
 
     function test_claim_twice() public {
-        vm.warp(dummyUnlockTime + 1);
         vm.prank(dummyRootSetter);
         merkleMinter.init(root, dummyToken);
+        vm.warp(dummyUnlockTime + 1);
         vm.expectCall(dummyToken, abi.encodeCall(KatToken.mintTo, (claimer2, amount2)));
         vm.mockCall(dummyToken, abi.encodeCall(KatToken.mintTo, (claimer2, amount2)), "");
         merkleMinter.claimKatToken(proof2, index2, amount2, claimer2);

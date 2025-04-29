@@ -2,6 +2,7 @@
 src = "src"
 out = "out"
 libs = ["dependencies"]
+optimizer = true
 
 # Required so tests use correct deployment
 always_use_create_2_factory=true

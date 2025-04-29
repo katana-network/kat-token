@@ -26,7 +26,7 @@ contract KatToken is ERC20Permit {
     // Inflation Factor, only relevant 4 years after deployment
     uint256 public inflationFactor;
     // Maximum configurable inflation (3% annually)
-    uint256 public constant MAX_INFLATION = 0.04264433740849369e18; // log2(1.03)
+    uint256 public constant MAX_INFLATION = 0.042644337408493685e18; // log2(1.03)
 
     // Address of the merkle minter, that holds all initial mint capacity
     address public immutable merkleMinter;
@@ -60,7 +60,7 @@ contract KatToken is ERC20Permit {
         inflationBeneficiary = _inflationBeneficiary;
 
         // Set initial inflation after 4 years
-        inflationFactor = 0.02856915219677089e18; // log2(1.02)
+        inflationFactor = 0.028569152196770894e18; // log2(1.02)
 
         merkleMinter = _merkleMinter;
     }
@@ -92,6 +92,7 @@ contract KatToken is ERC20Permit {
      */
     function renounceInflationAdmin() external {
         require(msg.sender == inflationAdmin, "Not role owner.");
+        require(pendingInflationAdmin == address(0), "Role transfer in progress.");
         inflationAdmin = address(0);
         emit InflationAdminChanged(address(0), false);
     }
@@ -123,6 +124,8 @@ contract KatToken is ERC20Permit {
      */
     function renounceInflationBeneficiary() external {
         require(msg.sender == inflationBeneficiary, "Not role owner.");
+        require(pendingInflationBeneficiary == address(0), "Role transfer in progress.");
+        require(inflationFactor == 0, "Inflation not zero.");
         inflationBeneficiary = address(0);
         emit InflationBeneficiaryChanged(address(0), false);
     }
@@ -155,7 +158,8 @@ contract KatToken is ERC20Permit {
      */
     function changeInflation(uint256 value) external {
         require(msg.sender == inflationAdmin, "Not role owner.");
-        require(value < MAX_INFLATION, "Inflation too large.");
+        require(value <= MAX_INFLATION, "Inflation too large.");
+        require(inflationBeneficiary != address(0), "No inflation beneficiary.");
         distributeInflation();
         uint256 oldValue = inflationFactor;
         inflationFactor = value;
@@ -180,14 +184,14 @@ contract KatToken is ERC20Permit {
      * Fully realizes newly available inflation as mint capacity to the INFLATION_BENEFICIARY
      */
     function distributeInflation() public {
+        // Check if we are in the before inflation period so we don't override lastMintCapacityIncrease
+        if (lastMintCapacityIncrease > block.timestamp) {
+            return;
+        }
         uint256 inflation = _calcInflation();
         distributedSupplyCap += inflation;
-        // give increase to INFLATION_BENEFICIARY
         mintCapacity[inflationBeneficiary] += inflation;
-        // increase distributedSupplyCap
-        if (block.timestamp > lastMintCapacityIncrease) {
-            lastMintCapacityIncrease = block.timestamp;
-        }
+        lastMintCapacityIncrease = block.timestamp;
         emit InflationDistributed(inflationBeneficiary, inflation);
     }
 
