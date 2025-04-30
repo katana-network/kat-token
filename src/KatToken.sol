@@ -8,19 +8,21 @@ contract KatToken is ERC20Permit {
     event InflationDistributed(address receiver, uint256 amount);
     event InflationChanged(uint256 oldValue, uint256 newValue);
     event MintCapacityDistributed(address sender, address receiver, uint256 amount);
-    event InflationAdminChanged(address newAdmin, bool pending);
-    event InflationBeneficiaryChanged(address newBeneficiary, bool pending);
+    event RoleChangeStarted(address newHolder, bytes32 role);
+    event RoleChangeCompleted(address newHolder, bytes32 role);
 
     // Roles
     // This role can set the inflation percentage
-    address public inflationAdmin;
-    address public pendingInflationAdmin;
-
+    bytes32 public constant INFLATION_ADMIN = keccak256("INFLATION_ADMIN");
     // Initial receiver of the inflated minting capacity, can distribute it away as needed
-    address public inflationBeneficiary;
-    address public pendingInflationBeneficiary;
-    address public lockExemptionAdmin;
-    address public unlocker;
+    bytes32 public constant INFLATION_BENEFICIARY = keccak256("INFLATION_BENEFICIARY");
+    // Can unlock the token early, no relocking
+    bytes32 public constant UNLOCKER = keccak256("UNLOCKER");
+    // Can give and take the right to transfer during locking period
+    bytes32 public constant LOCK_EXEMPTION_ADMIN = keccak256("LOCK_EXEMPTION_ADMIN");
+
+    mapping(bytes32 => address) public roleHolder;
+    mapping(bytes32 => address) public pendingRoleHolder;
 
     // Inflation
     // cap after the last settlement
@@ -38,6 +40,11 @@ contract KatToken is ERC20Permit {
     bool public locked = true;
 
     mapping(address => bool) lockExemption;
+
+    modifier hasRole(bytes32 _role) {
+        require(roleHolder[_role] == msg.sender, "Not role holder.");
+        _;
+    }
 
     constructor(
         string memory _name,
@@ -69,91 +76,75 @@ contract KatToken is ERC20Permit {
         lastMintCapacityIncrease = block.timestamp;
 
         // Assign roles
-        inflationAdmin = _inflationAdmin;
-        inflationBeneficiary = _inflationBeneficiary;
+        roleHolder[INFLATION_ADMIN] = _inflationAdmin;
+        roleHolder[INFLATION_BENEFICIARY] = _inflationBeneficiary;
+        roleHolder[UNLOCKER] = _unlocker;
+        roleHolder[LOCK_EXEMPTION_ADMIN] = _lockExemptionAdmin;
 
         // Set initial inflation
         inflationFactor = 0;
 
         unlockTime = _unlockTime;
-        unlocker = _unlocker;
         lockExemption[_distributor] = true;
-        lockExemptionAdmin = _lockExemptionAdmin;
     }
 
     /**
      * Function to change the current owner of the inflationAdmin role
      * To finalize the change the new owner needs to call acceptInflationAdmin()
-     * @param newInflationAdmin address that will hold the role
      */
-    function changeInflationAdmin(address newInflationAdmin) external {
-        require(msg.sender == inflationAdmin, "Not role owner.");
-        pendingInflationAdmin = newInflationAdmin;
-        emit InflationAdminChanged(newInflationAdmin, true);
+    function changeRoleHolder(address _newRoleOwner, bytes32 _role) external hasRole(_role) {
+        pendingRoleHolder[_role] = _newRoleOwner;
+        emit RoleChangeStarted(_newRoleOwner, _role);
     }
 
     /**
-     * Function to accept the inflationAdmin role
+     * Function to change the current owner of the inflationAdmin role
+     * To finalize the change the new owner needs to call acceptInflationAdmin()
      */
-    function acceptInflationAdmin() external {
-        require(msg.sender == pendingInflationAdmin, "Not new role owner.");
-        inflationAdmin = pendingInflationAdmin;
-        pendingInflationAdmin = address(0);
-        emit InflationAdminChanged(inflationAdmin, false);
+    function acceptRole(bytes32 _role) external {
+        require(pendingRoleHolder[_role] == msg.sender, "Not new role holder.");
+        roleHolder[_role] = pendingRoleHolder[_role];
+        pendingRoleHolder[_role] = address(0);
+        emit RoleChangeCompleted(msg.sender, _role);
     }
 
     /**
      * Function to renounce the inflationAdmin role
      * This can't be reverted
      */
-    function renounceInflationAdmin() external {
-        require(msg.sender == inflationAdmin, "Not role owner.");
-        require(pendingInflationAdmin == address(0), "Role transfer in progress.");
-        inflationAdmin = address(0);
-        emit InflationAdminChanged(address(0), false);
-    }
-
-    /**
-     * Function to change the current owner of the inflationBeneficiary role
-     * To finalize the change the new owner needs to call acceptInflationBeneficiary()
-     * @param newInflationBeneficiary address that will hold the role
-     */
-    function changeInflationBeneficiary(address newInflationBeneficiary) external {
-        require(msg.sender == inflationBeneficiary, "Not role owner.");
-        pendingInflationBeneficiary = newInflationBeneficiary;
-        emit InflationBeneficiaryChanged(newInflationBeneficiary, true);
-    }
-
-    /**
-     * Function to accept the inflationBeneficiary role
-     */
-    function acceptInflationBeneficiary() external {
-        require(msg.sender == pendingInflationBeneficiary, "Not new role owner.");
-        inflationBeneficiary = pendingInflationBeneficiary;
-        pendingInflationBeneficiary = address(0);
-        emit InflationBeneficiaryChanged(inflationBeneficiary, false);
+    function renounceInflationAdmin() external hasRole(INFLATION_ADMIN) {
+        require(pendingRoleHolder[INFLATION_ADMIN] == address(0), "Role transfer in progress.");
+        roleHolder[INFLATION_ADMIN] = address(0);
     }
 
     /**
      * Function to renounce the inflationBeneficiary role
      * This can't be reverted
      */
-    function renounceInflationBeneficiary() external {
-        require(msg.sender == inflationBeneficiary, "Not role owner.");
-        require(pendingInflationBeneficiary == address(0), "Role transfer in progress.");
+    function renounceInflationBeneficiary() external hasRole(INFLATION_BENEFICIARY) {
+        require(pendingRoleHolder[INFLATION_BENEFICIARY] == address(0), "Role transfer in progress.");
         require(inflationFactor == 0, "Inflation not zero.");
-        inflationBeneficiary = address(0);
-        emit InflationBeneficiaryChanged(address(0), false);
+        roleHolder[INFLATION_BENEFICIARY] = address(0);
+        emit RoleChangeCompleted(address(0), INFLATION_BENEFICIARY);
     }
 
     /**
      * Unlocks the claim function early, afterwards contract can't be locked again
      * Can be used after unlock to clean unlocker variable
      */
-    function unlockAndRenounceUnlocker() external {
-        require(msg.sender == unlocker, "Not unlocker.");
+    function unlockAndRenounceUnlocker() external hasRole(UNLOCKER) {
         locked = false;
-        unlocker = address(0);
+        roleHolder[UNLOCKER] = address(0);
+        pendingRoleHolder[UNLOCKER] = address(0);
+    }
+
+    /**
+     * Unlocks the claim function early, afterwards contract can't be locked again
+     * Can be used after unlock to clean unlocker variable
+     */
+    function renounceLockExemptionAdmin() external hasRole(LOCK_EXEMPTION_ADMIN) {
+        roleHolder[LOCK_EXEMPTION_ADMIN] = address(0);
+        pendingRoleHolder[LOCK_EXEMPTION_ADMIN] = address(0);
     }
 
     function isLocked() public view returns (bool) {
@@ -161,8 +152,7 @@ contract KatToken is ERC20Permit {
         return (block.timestamp > unlockTime) || !locked;
     }
 
-    function setWhitelist(address user) external {
-        require(msg.sender == lockExemptionAdmin, "Not lockExemption admin.");
+    function setWhitelist(address user) external hasRole(LOCK_EXEMPTION_ADMIN) {
         lockExemption[user] = !lockExemption[user];
     }
 
@@ -192,9 +182,8 @@ contract KatToken is ERC20Permit {
      * @dev only callable by the current INFLATION_ADMIN
      * @param value The new inflation factor
      */
-    function changeInflation(uint256 value) external {
-        require(msg.sender == inflationAdmin, "Not role owner.");
-        require(inflationBeneficiary != address(0), "No inflation beneficiary.");
+    function changeInflation(uint256 value) external hasRole(INFLATION_ADMIN) {
+        require(roleHolder[INFLATION_BENEFICIARY] != address(0), "No inflation beneficiary.");
         distributeInflation();
         uint256 oldValue = inflationFactor;
         inflationFactor = value;
@@ -221,6 +210,7 @@ contract KatToken is ERC20Permit {
      */
     function distributeInflation() public {
         uint256 inflation = _calcInflation();
+        address inflationBeneficiary = roleHolder[INFLATION_BENEFICIARY];
         distributedSupplyCap += inflation;
         mintCapacity[inflationBeneficiary] += inflation;
         lastMintCapacityIncrease = block.timestamp;
