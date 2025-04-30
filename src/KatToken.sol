@@ -27,10 +27,8 @@ contract KatToken is ERC20Permit {
     uint256 public distributedSupplyCap;
     // Blocktime of last inflated mintCapacity distribution
     uint256 public lastMintCapacityIncrease;
-    // Inflation Factor, only relevant 4 years after deployment
+    // Inflation Factor
     uint256 public inflationFactor;
-    // Maximum configurable inflation (3% annually)
-    uint256 public constant MAX_INFLATION = 0.042644337408493685e18; // log2(1.03)
 
     // Mint capacity distributed after the inflation starts
     mapping(address => uint256) public mintCapacity;
@@ -67,16 +65,15 @@ contract KatToken is ERC20Permit {
         mintCapacity[_distributor] = initialDistribution;
         distributedSupplyCap = initialDistribution;
 
-        // set to start of supply increase, 4 years after deployment
-        // all these calcs ignore leap seconds or might be otherwise slightly inaccurate, we assume this is good enough
-        lastMintCapacityIncrease = block.timestamp + 4 * 365 days + 1 days;
+        // set to sane default value
+        lastMintCapacityIncrease = block.timestamp;
 
         // Assign roles
         inflationAdmin = _inflationAdmin;
         inflationBeneficiary = _inflationBeneficiary;
 
-        // Set initial inflation after 4 years
-        inflationFactor = 0.028569152196770894e18; // log2(1.02)
+        // Set initial inflation
+        inflationFactor = 0;
 
         unlockTime = _unlockTime;
         unlocker = _unlocker;
@@ -197,7 +194,6 @@ contract KatToken is ERC20Permit {
      */
     function changeInflation(uint256 value) external {
         require(msg.sender == inflationAdmin, "Not role owner.");
-        require(value <= MAX_INFLATION, "Inflation too large.");
         require(inflationBeneficiary != address(0), "No inflation beneficiary.");
         distributeInflation();
         uint256 oldValue = inflationFactor;
@@ -210,7 +206,7 @@ contract KatToken is ERC20Permit {
      * @return The unrealized inflation since the last realization
      */
     function _calcInflation() internal view returns (uint256) {
-        if (lastMintCapacityIncrease > block.timestamp) {
+        if (lastMintCapacityIncrease == block.timestamp) {
             return 0;
         }
         uint256 timeElapsed = block.timestamp - lastMintCapacityIncrease;
@@ -223,10 +219,6 @@ contract KatToken is ERC20Permit {
      * Fully realizes newly available inflation as mint capacity to the INFLATION_BENEFICIARY
      */
     function distributeInflation() public {
-        // Check if we are in the before inflation period so we don't override lastMintCapacityIncrease
-        if (lastMintCapacityIncrease > block.timestamp) {
-            return;
-        }
         uint256 inflation = _calcInflation();
         distributedSupplyCap += inflation;
         mintCapacity[inflationBeneficiary] += inflation;
