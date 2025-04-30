@@ -6,20 +6,27 @@ import "../script/Deploy.s.sol";
 import "../src/KatToken.sol";
 
 contract UnlockTest is Test, DeployScript {
-    KatToken katToken;
+    KatToken token;
     address alice = makeAddr("alice");
+    address beatrice = makeAddr("beatrice");
+
     address dummyToken = makeAddr("dummyToken");
 
     function setUp() public {
-        katToken = deployDummyToken();
+        token = deployDummyToken();
     }
 
     function test_locked() public {
-        vm.expectRevert("Minter locked.");
+        vm.prank(dummyDistributor);
+        token.mint(alice, 10);
+
+        vm.prank(alice);
+        vm.expectRevert("Token locked.");
+        token.transfer(beatrice, 10);
     }
 
     function test_unlock_early_no() public {
-        vm.expectRevert("Not unlocker.");
-        katToken.unlockAndRenounceUnlocker();
+        vm.expectRevert("Not role holder.");
+        token.unlockAndRenounceUnlocker();
     }
 }

@@ -11,7 +11,6 @@ contract DeployScript is Script {
     bytes32 constant salt = "funny text";
     address dummyInflationAdmin = makeAddr("inflation_admin");
     address dummyInflationBen = makeAddr("inflation_ben");
-    address dummyMerkleMinter = makeAddr("inflation_admin");
     address dummyUnlocker = makeAddr("unlocker");
     address dummyLockExmeptionAdmin = makeAddr("lock_exemption_admin");
     address dummyDistributor = makeAddr("distributor");
@@ -33,10 +32,10 @@ contract DeployScript is Script {
     function deploy(
         address _inflationAdmin,
         address _inflationBen,
-        address _unlocker,
+        address _distributor,
         uint256 _unlockTime,
-        address _lockExemptionAdmin,
-        address _distributor
+        address _unlocker,
+        address _lockExemptionAdmin
     ) public returns (KatToken katToken) {
         // string memory _name,
         // string memory _symbol,
