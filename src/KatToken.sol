@@ -11,14 +11,18 @@ contract KatToken is ERC20Permit {
     event InflationAdminChanged(address newAdmin, bool pending);
     event InflationBeneficiaryChanged(address newBeneficiary, bool pending);
 
-    // This role can set the inflation to values between 0% and 3% per year
+    // Roles
+    // This role can set the inflation percentage
     address public inflationAdmin;
     address public pendingInflationAdmin;
 
     // Initial receiver of the inflated minting capacity, can distribute it away as needed
     address public inflationBeneficiary;
     address public pendingInflationBeneficiary;
+    address public lockExemptionAdmin;
+    address public unlocker;
 
+    // Inflation
     // cap after the last settlement
     uint256 public distributedSupplyCap;
     // Blocktime of last inflated mintCapacity distribution
@@ -31,12 +35,11 @@ contract KatToken is ERC20Permit {
     // Mint capacity distributed after the inflation starts
     mapping(address => uint256) public mintCapacity;
 
+    // Lock
     uint256 public immutable unlockTime;
     bool public locked = true;
-    address public unlocker;
 
-    mapping(address => bool) lockExempt;
-    address public lockExemptionAdmin;
+    mapping(address => bool) lockExemption;
 
     constructor(
         string memory _name,
@@ -46,7 +49,7 @@ contract KatToken is ERC20Permit {
         address _distributor,
         uint256 _unlockTime,
         address _unlocker,
-        address lockExemptionAdmin
+        address _lockExemptionAdmin
     ) ERC20(_name, _symbol) ERC20Permit(_name) {
         require(bytes(_name).length != 0);
         require(bytes(_symbol).length != 0);
@@ -56,6 +59,8 @@ contract KatToken is ERC20Permit {
         require(_unlockTime > block.timestamp);
         // Unlock at most 24 months in the future
         require(_unlockTime < block.timestamp + 24 * 30 days);
+        require(_unlocker != address(0));
+        require(_lockExemptionAdmin != address(0));
 
         // Initial cap is 10 billion
         uint256 initialDistribution = 10_000_000_000 * (10 ** decimals());
@@ -75,8 +80,8 @@ contract KatToken is ERC20Permit {
 
         unlockTime = _unlockTime;
         unlocker = _unlocker;
-        lockExempt[_distributor] = true;
-        lockExemptionAdmin = lockExemptionAdmin;
+        lockExemption[_distributor] = true;
+        lockExemptionAdmin = _lockExemptionAdmin;
     }
 
     /**
@@ -161,7 +166,7 @@ contract KatToken is ERC20Permit {
 
     function setWhitelist(address user) external {
         require(msg.sender == lockExemptionAdmin, "Not lockExemption admin.");
-        lockExempt[user] = !lockExempt[user];
+        lockExemption[user] = !lockExemption[user];
     }
 
     /**
@@ -250,7 +255,7 @@ contract KatToken is ERC20Permit {
         if (isLocked()) {
             // Only allow transfer for lockExempted addresses
             // transferFrom only works if both approver and spender are whitelisted
-            if (!(lockExempt[from] && lockExempt[msg.sender])) {
+            if (!(lockExemption[from] && lockExemption[msg.sender])) {
                 revert("Token locked.");
             }
         }
