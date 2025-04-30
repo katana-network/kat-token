@@ -35,27 +35,31 @@ contract KatToken is ERC20Permit {
     bool public locked = true;
     address public unlocker;
 
+    mapping(address => bool) lockExempt;
+    address public lockExemptionAdmin;
+
     constructor(
         string memory _name,
         string memory _symbol,
         address _inflationAdmin,
         address _inflationBeneficiary,
-        address _foundation,
+        address _distributor,
         uint256 _unlockTime,
-        address _unlocker
+        address _unlocker,
+        address lockExemptionAdmin
     ) ERC20(_name, _symbol) ERC20Permit(_name) {
         require(bytes(_name).length != 0);
         require(bytes(_symbol).length != 0);
         require(_inflationAdmin != address(0));
         require(_inflationBeneficiary != address(0));
-        require(_foundation != address(0));
+        require(_distributor != address(0));
         require(_unlockTime > block.timestamp);
         // Unlock at most 24 months in the future
         require(_unlockTime < block.timestamp + 24 * 30 days);
 
         // Initial cap is 10 billion
         uint256 initialDistribution = 10_000_000_000 * (10 ** decimals());
-        mintCapacity[_foundation] = initialDistribution;
+        mintCapacity[_distributor] = initialDistribution;
         distributedSupplyCap = initialDistribution;
 
         // set to start of supply increase, 4 years after deployment
@@ -71,6 +75,8 @@ contract KatToken is ERC20Permit {
 
         unlockTime = _unlockTime;
         unlocker = _unlocker;
+        lockExempt[_distributor] = true;
+        lockExemptionAdmin = lockExemptionAdmin;
     }
 
     /**
@@ -153,6 +159,11 @@ contract KatToken is ERC20Permit {
         return (block.timestamp > unlockTime) || !locked;
     }
 
+    function setWhitelist(address user) external {
+        require(msg.sender == lockExemptionAdmin, "Not lockExemption admin.");
+        lockExempt[user] = !lockExempt[user];
+    }
+
     /**
      * Mint within confines of mint capacity
      * @param to Receiver of the newly minted tokens
@@ -231,9 +242,17 @@ contract KatToken is ERC20Permit {
         emit MintCapacityDistributed(msg.sender, to, amount);
     }
 
+    /**
+     * Override _update to check if lock is still in place
+     * Additionally check if user is allowed early transfers
+     */
     function _update(address from, address to, uint256 amount) internal override {
         if (isLocked()) {
-            revert("Token locked.");
+            // Only allow transfer for lockExempted addresses
+            // transferFrom only works if both approver and spender are whitelisted
+            if (!(lockExempt[from] && lockExempt[msg.sender])) {
+                revert("Token locked.");
+            }
         }
         super._update(from, to, amount);
     }
