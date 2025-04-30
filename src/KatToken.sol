@@ -147,7 +147,7 @@ contract KatToken is ERC20Permit {
         pendingRoleHolder[LOCK_EXEMPTION_ADMIN] = address(0);
     }
 
-    function isLocked() public view returns (bool) {
+    function isUnlocked() public view returns (bool) {
         // do a fail fast check on time first, then storage slot, this makes transfer cheap again after the time unlock
         return (block.timestamp > unlockTime) || !locked;
     }
@@ -235,13 +235,17 @@ contract KatToken is ERC20Permit {
      * Additionally check if user is allowed early transfers
      */
     function _update(address from, address to, uint256 amount) internal override {
-        if (isLocked()) {
-            // Only allow transfer for lockExempted addresses
-            // transferFrom only works if both approver and spender are whitelisted
-            if (!(lockExemption[from] && lockExemption[msg.sender])) {
-                revert("Token locked.");
-            }
+        if (isUnlocked()) {
+            super._update(from, to, amount);
         }
-        super._update(from, to, amount);
+        // Only allow transfer for lockExempted addresses
+        // transferFrom only works if both approver and spender are whitelisted
+        else if (lockExemption[from] && lockExemption[msg.sender]) {
+            super._update(from, to, amount);
+        } else if (from == address(0)) {
+            super._update(from, to, amount);
+        } else {
+            revert("Token locked.");
+        }
     }
 }
