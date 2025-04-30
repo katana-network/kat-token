@@ -49,27 +49,27 @@ contract MintTest is Test, DeployScript {
         token.distributeMintCapacity(address(0), originalCapacity);
     }
 
-    function test_mintTo() public {
+    function test_mint() public {
         uint256 allCapacity = token.mintCapacity(dummyMerkleMinter);
         vm.prank(dummyMerkleMinter);
-        token.mintTo(alice, allCapacity / 2);
+        token.mint(alice, allCapacity / 2);
         assertEq(token.balanceOf(alice), allCapacity / 2);
         assertEq(token.mintCapacity(dummyMerkleMinter), allCapacity / 2);
 
         vm.prank(dummyMerkleMinter);
-        token.mintTo(beatrice, allCapacity / 4);
+        token.mint(beatrice, allCapacity / 4);
         assertEq(token.balanceOf(beatrice), allCapacity * 1 / 4);
         assertEq(token.mintCapacity(dummyMerkleMinter), allCapacity * 1 / 4);
     }
 
-    function test_mintTo_fail() public {
+    function test_mint_fail() public {
         vm.prank(alice);
         vm.expectRevert("Not enough mint capacity.");
-        token.mintTo(beatrice, 10);
+        token.mint(beatrice, 10);
         uint256 allCapacity = token.mintCapacity(dummyMerkleMinter);
         vm.prank(dummyMerkleMinter);
         vm.expectRevert("Not enough mint capacity.");
-        token.mintTo(beatrice, allCapacity + 1);
+        token.mint(beatrice, allCapacity + 1);
     }
 
     function warpYears(uint256 amount) internal {

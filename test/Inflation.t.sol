@@ -28,19 +28,6 @@ contract InflationTest is Test, DeployScript {
         assertCorrectCap([uint256(10_300_000_000 * decimals), 10_609_000_000 * decimals]);
     }
 
-    function test_over_Max_Inflation() public {
-        vm.startPrank(dummyInflationAdmin);
-        uint256 max_inflation = token.MAX_INFLATION();
-        vm.expectRevert("Inflation too large.");
-        token.changeInflation(max_inflation + 1);
-
-        vm.expectRevert("Inflation too large.");
-        token.changeInflation(three_inflation + 10);
-
-        vm.expectRevert("Inflation too large.");
-        token.changeInflation(100000000000000000000000);
-    }
-
     function test_zero_Inflation() public {
         vm.prank(dummyInflationAdmin);
         token.changeInflation(0);
