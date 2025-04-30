@@ -171,7 +171,7 @@ contract KatToken is ERC20Permit {
      * @param to Receiver of the newly minted tokens
      * @param amount Amount to be minted
      */
-    function mintTo(address to, uint256 amount) external {
+    function mint(address to, uint256 amount) external {
         require(mintCapacity[msg.sender] >= amount, "Not enough mint capacity.");
         mintCapacity[msg.sender] -= amount;
         _mint(to, amount);
@@ -206,6 +206,7 @@ contract KatToken is ERC20Permit {
      * @return The unrealized inflation since the last realization
      */
     function _calcInflation() internal view returns (uint256) {
+        // Only used if inflation was distributed in same block, worth it?
         if (lastMintCapacityIncrease == block.timestamp) {
             return 0;
         }
