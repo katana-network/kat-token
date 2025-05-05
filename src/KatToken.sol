@@ -21,24 +21,32 @@ contract KatToken is ERC20Permit {
     // Can give and take the right to transfer during locking period
     bytes32 public constant LOCK_EXEMPTION_ADMIN = keccak256("LOCK_EXEMPTION_ADMIN");
 
+    // All current role holder
     mapping(bytes32 => address) public roleHolder;
+    // Potential new role holder, if they accept
     mapping(bytes32 => address) public pendingRoleHolder;
 
     // Inflation
-    // cap after the last settlement
+    // Total token capacity after the last settlement
     uint256 public distributedSupplyCap;
     // Blocktime of last inflated mintCapacity distribution
     uint256 public lastMintCapacityIncrease;
     // Inflation Factor
+    // Be careful when changing this, value needs to be set as the log of the expected inflation percentage
+    // Example: yearly inflation of 2% needs an inflationFactor of log(1.02) = 0.028569152196770894e18
+    // Don't forget the decimals, also take a look at the tests in Inflation.t.sol
     uint256 public inflationFactor;
 
-    // Mint capacity distributed after the inflation starts
+    // Mint capacity distributed from inflation, also initial mint capacity
     mapping(address => uint256) public mintCapacity;
 
     // Lock
+    // Time of the unlock, can't be changed, lock definitely opens after this
     uint256 public immutable unlockTime;
+    // Overrides unlockTime to allow early unlocking, can't be used to lock again, also not required for time based unlocking
     bool public locked = true;
 
+    // Addresses exempted from the lock, can transfer and transferFrom (only if both spender and from are exempted) during lock
     mapping(address => bool) lockExemption;
 
     modifier hasRole(bytes32 _role) {
@@ -74,6 +82,8 @@ contract KatToken is ERC20Permit {
 
         // set to sane default value
         lastMintCapacityIncrease = block.timestamp;
+        // Set initial inflation to 0
+        inflationFactor = 0;
 
         // Assign roles
         roleHolder[INFLATION_ADMIN] = _inflationAdmin;
@@ -81,16 +91,14 @@ contract KatToken is ERC20Permit {
         roleHolder[UNLOCKER] = _unlocker;
         roleHolder[LOCK_EXEMPTION_ADMIN] = _lockExemptionAdmin;
 
-        // Set initial inflation
-        inflationFactor = 0;
-
         unlockTime = _unlockTime;
+        // Allow transfers for initial token distributor
         lockExemption[_distributor] = true;
     }
 
     /**
-     * Function to change the current owner of the inflationAdmin role
-     * To finalize the change the new owner needs to call acceptInflationAdmin()
+     * Function to change the current holder of a role, can only be used by current role holder
+     * To finalize the change the new holder needs to call acceptRole()
      */
     function changeRoleHolder(address _newRoleOwner, bytes32 _role) external hasRole(_role) {
         pendingRoleHolder[_role] = _newRoleOwner;
@@ -98,19 +106,20 @@ contract KatToken is ERC20Permit {
     }
 
     /**
-     * Function to change the current owner of the inflationAdmin role
-     * To finalize the change the new owner needs to call acceptInflationAdmin()
+     * Function to accept a role holder change proposal
+     * Only the pending role holder can accept
      */
     function acceptRole(bytes32 _role) external {
         require(pendingRoleHolder[_role] == msg.sender, "Not new role holder.");
         roleHolder[_role] = pendingRoleHolder[_role];
         pendingRoleHolder[_role] = address(0);
-        emit RoleChangeCompleted(msg.sender, _role);
+        emit RoleChangeCompleted(roleHolder[_role], _role);
     }
 
     /**
      * Function to renounce the inflationAdmin role
      * This can't be reverted
+     * Inflation can be not 0 and INFLATION_BENEFICIARY can still be changed
      */
     function renounceInflationAdmin() external hasRole(INFLATION_ADMIN) {
         require(pendingRoleHolder[INFLATION_ADMIN] == address(0), "Role transfer in progress.");
@@ -120,6 +129,7 @@ contract KatToken is ERC20Permit {
     /**
      * Function to renounce the inflationBeneficiary role
      * This can't be reverted
+     * Can only happen once inflation is 0 and INFALTION_ADMIN is renounced
      */
     function renounceInflationBeneficiary() external hasRole(INFLATION_BENEFICIARY) {
         require(pendingRoleHolder[INFLATION_BENEFICIARY] == address(0), "Role transfer in progress.");
@@ -142,19 +152,26 @@ contract KatToken is ERC20Permit {
     }
 
     /**
-     * Unlocks the claim function early, afterwards contract can't be locked again
-     * Can be used after unlock to clean unlocker variable
+     * Renounces the LOCK_EXEMPTION_ADMIN
+     * Can be used after unlock to clean LOCK_EXEMPTION_ADMIN variable
+     * For full cleaning lockExemption needs to be manually emptied
      */
     function renounceLockExemptionAdmin() external hasRole(LOCK_EXEMPTION_ADMIN) {
         roleHolder[LOCK_EXEMPTION_ADMIN] = address(0);
         pendingRoleHolder[LOCK_EXEMPTION_ADMIN] = address(0);
     }
 
+    /**
+     * Returns true if either the unlock time has passed or a manual unlock has occurred
+     */
     function isUnlocked() public view returns (bool) {
         // do a fail fast check on time first, then storage slot, this makes transfer cheap again after the time unlock
         return (block.timestamp > unlockTime) || !locked;
     }
 
+    /**
+     * Adds (or removes) an address to allow it to transfer during the lock period
+     */
     function setWhitelist(address user) external hasRole(LOCK_EXEMPTION_ADMIN) {
         lockExemption[user] = !lockExemption[user];
     }
