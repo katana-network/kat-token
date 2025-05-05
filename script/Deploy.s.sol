@@ -12,17 +12,36 @@ contract DeployScript is Script {
     address dummyInflationAdmin = makeAddr("inflation_admin");
     address dummyInflationBen = makeAddr("inflation_ben");
     address dummyUnlocker = makeAddr("unlocker");
-    address dummyLockExmeptionAdmin = makeAddr("lock_exemption_admin");
+    address dummyLockExemptionAdmin = makeAddr("lock_exemption_admin");
     address dummyDistributor = makeAddr("distributor");
     uint256 dummyUnlockTime = block.timestamp + 9 days;
 
     function run() public {
         address _inflationAdmin = vm.envAddress("INFLATION_ADMIN");
+        require(_inflationAdmin != address(0), "Missing INFLATION_ADMIN");
+        console.log("Using INFLATION_ADMIN:", _inflationAdmin);
+
         address _inflationBen = vm.envAddress("INFLATION_BENEFICIARY");
+        require(_inflationBen != address(0), "Missing INFLATION_BENEFICIARY");
+        console.log("Using INFLATION_BENEFICIARY:", _inflationBen);
+
         address _unlocker = vm.envAddress("UNLOCKER");
+        require(_unlocker != address(0), "Missing UNLOCKER");
+        console.log("Using UNLOCKER:", _unlocker);
+
         uint256 _unlockTime = vm.envUint("UNLOCKTIME");
+        require(_unlockTime != 0, "Missing UNLOCKTIME");
+        console.log("Using UNLOCKTIME:", _unlockTime);
+
         address _lockExemptionAdmin = vm.envAddress("LOCK_EXEMPTION_ADMIN");
+        require(_lockExemptionAdmin != address(0), "Missing LOCK_EXEMPTION_ADMIN");
+        console.log("Using LOCK_EXEMPTION_ADMIN:", _lockExemptionAdmin);
+
         address _distributor = vm.envAddress("DISTRIBUTOR");
+        require(_distributor != address(0), "Missing DISTRIBUTOR");
+        console.log("Using DISTRIBUTOR:", _distributor);
+
+        console.log("------------DEPLOYING------------");
 
         KatToken katToken =
             deploy(_inflationAdmin, _inflationBen, _distributor, _unlockTime, _unlocker, _lockExemptionAdmin);
@@ -64,7 +83,7 @@ contract DeployScript is Script {
             dummyDistributor,
             dummyUnlockTime,
             dummyUnlocker,
-            dummyLockExmeptionAdmin
+            dummyLockExemptionAdmin
         );
     }
 }
