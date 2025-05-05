@@ -11,11 +11,22 @@ contract KatTokenTest is Test, DeployScript {
     address beatrice = makeAddr("beatrice");
     bytes32 INFLATION_ADMIN;
     bytes32 INFLATION_BENEFICIARY;
+    bytes32 LOCK_EXEMPTION_ADMIN;
 
     function setUp() public {
         token = deployDummyToken();
         INFLATION_ADMIN = token.INFLATION_ADMIN();
         INFLATION_BENEFICIARY = token.INFLATION_BENEFICIARY();
+        LOCK_EXEMPTION_ADMIN = token.LOCK_EXEMPTION_ADMIN();
+    }
+
+    function test_renounce_lock_exemption_admin() public {
+        vm.prank(alice);
+        vm.expectRevert("Not role holder.");
+        token.renounceLockExemptionAdmin();
+
+        vm.prank(dummyLockExemptionAdmin);
+        token.renounceLockExemptionAdmin();
     }
 
     function test_change_inflation_admin() public {
@@ -50,6 +61,30 @@ contract KatTokenTest is Test, DeployScript {
         vm.prank(beatrice);
         vm.expectRevert("Not new role holder.");
         token.acceptRole(INFLATION_ADMIN);
+    }
+
+    function test_renounce_inflation_interplay_0_inflation() public {
+        vm.prank(dummyInflationBen);
+        vm.expectRevert("Inflation admin not 0.");
+        token.renounceInflationBeneficiary();
+
+        vm.prank(dummyInflationAdmin);
+        token.renounceInflationAdmin();
+
+        vm.prank(dummyInflationBen);
+        token.renounceInflationBeneficiary();
+    }
+
+    function test_renounce_inflation_interplay_active_inflation() public {
+        vm.prank(dummyInflationAdmin);
+        token.changeInflation(1);
+        vm.prank(dummyInflationBen);
+        vm.expectRevert("Inflation not zero.");
+        token.renounceInflationBeneficiary();
+
+        vm.prank(dummyInflationAdmin);
+        token.renounceInflationAdmin();
+        assertEq(token.roleHolder(INFLATION_ADMIN), address(0));
     }
 
     function test_renounce_inflation_admin() public {
