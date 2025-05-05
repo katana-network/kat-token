@@ -125,6 +125,12 @@ contract KatTokenTest is Test, DeployScript {
         vm.prank(dummyInflationAdmin);
         token.changeInflation(0);
         vm.prank(dummyInflationBen);
+        vm.expectRevert("Inflation admin not 0.");
+        token.renounceInflationBeneficiary();
+
+        vm.prank(dummyInflationAdmin);
+        token.renounceInflationAdmin();
+        vm.prank(dummyInflationBen);
         token.renounceInflationBeneficiary();
         assertEq(token.roleHolder(INFLATION_BENEFICIARY), address(0));
     }
@@ -139,6 +145,8 @@ contract KatTokenTest is Test, DeployScript {
         vm.prank(dummyInflationBen);
         token.renounceInflationBeneficiary();
 
+        vm.prank(dummyInflationAdmin);
+        token.renounceInflationAdmin();
         vm.prank(dummyInflationBen);
         token.changeRoleHolder(address(0), INFLATION_BENEFICIARY);
         vm.prank(dummyInflationBen);
