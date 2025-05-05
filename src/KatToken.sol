@@ -124,6 +124,9 @@ contract KatToken is ERC20Permit {
     function renounceInflationBeneficiary() external hasRole(INFLATION_BENEFICIARY) {
         require(pendingRoleHolder[INFLATION_BENEFICIARY] == address(0), "Role transfer in progress.");
         require(inflationFactor == 0, "Inflation not zero.");
+        require(roleHolder[INFLATION_ADMIN] == address(0), "Inflation admin not 0.");
+        require(pendingRoleHolder[INFLATION_ADMIN] == address(0), "Role transfer in progress.");
+
         roleHolder[INFLATION_BENEFICIARY] = address(0);
         emit RoleChangeCompleted(address(0), INFLATION_BENEFICIARY);
     }
