@@ -44,10 +44,11 @@ contract DeployScript is Script {
         console.log("Using DISTRIBUTOR:", _distributor);
 
         console.log("------------DEPLOYING------------");
-
+        vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
         scriptDeployedToken =
             deploy(_inflationAdmin, _inflationBen, _distributor, _unlockTime, _unlocker, _lockExemptionAdmin);
         console.log("KAT token address: ", address(scriptDeployedToken));
+        vm.stopBroadcast();
     }
 
     function deploy(
