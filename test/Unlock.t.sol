@@ -62,7 +62,7 @@ contract UnlockTest is Test, DeployScript {
         assertEq(token.isUnlocked(), false);
         vm.warp(dummyUnlockTime);
         assertEq(token.isUnlocked(), false);
-        
+
         vm.warp(dummyUnlockTime + 1);
         assertEq(token.isUnlocked(), true);
         assertEq(token.roleHolder(UNLOCKER), dummyUnlocker);
@@ -92,7 +92,7 @@ contract UnlockTest is Test, DeployScript {
         token.transfer(beatrice, 10);
 
         vm.prank(dummyLockExemptionAdmin);
-        token.setWhitelist(alice);
+        token.setLockExemption(alice);
 
         vm.prank(alice);
         token.transfer(beatrice, 10);
@@ -111,13 +111,13 @@ contract UnlockTest is Test, DeployScript {
         token.transfer(beatrice, 10);
 
         vm.prank(dummyLockExemptionAdmin);
-        token.setWhitelist(alice);
+        token.setLockExemption(alice);
 
         vm.prank(alice);
         token.transfer(beatrice, 10);
 
         vm.prank(dummyLockExemptionAdmin);
-        token.setWhitelist(alice);
+        token.setLockExemption(alice);
 
         vm.prank(alice);
         vm.expectRevert("Token locked.");
