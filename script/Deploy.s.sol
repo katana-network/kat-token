@@ -16,6 +16,8 @@ contract DeployScript is Script {
     address dummyDistributor = makeAddr("distributor");
     uint256 dummyUnlockTime = block.timestamp + 9 days;
 
+    KatToken scriptDeployedToken;
+
     function run() public {
         address _inflationAdmin = vm.envAddress("INFLATION_ADMIN");
         require(_inflationAdmin != address(0), "Missing INFLATION_ADMIN");
@@ -43,9 +45,9 @@ contract DeployScript is Script {
 
         console.log("------------DEPLOYING------------");
 
-        KatToken katToken =
+        scriptDeployedToken =
             deploy(_inflationAdmin, _inflationBen, _distributor, _unlockTime, _unlocker, _lockExemptionAdmin);
-        console.log("KAT token address: ", address(katToken));
+        console.log("KAT token address: ", address(scriptDeployedToken));
     }
 
     function deploy(
