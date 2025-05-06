@@ -124,6 +124,7 @@ contract KatToken is ERC20Permit {
     function renounceInflationAdmin() external hasRole(INFLATION_ADMIN) {
         require(pendingRoleHolder[INFLATION_ADMIN] == address(0), "Role transfer in progress.");
         roleHolder[INFLATION_ADMIN] = address(0);
+        emit RoleChangeCompleted(address(0), INFLATION_ADMIN);
     }
 
     /**
@@ -134,10 +135,8 @@ contract KatToken is ERC20Permit {
     function renounceInflationBeneficiary() external hasRole(INFLATION_BENEFICIARY) {
         require(pendingRoleHolder[INFLATION_BENEFICIARY] == address(0), "Role transfer in progress.");
         require(inflationFactor == 0, "Inflation not zero.");
-        // Can't be wrong, remove?
         require(roleHolder[INFLATION_ADMIN] == address(0), "Inflation admin not 0.");
         require(pendingRoleHolder[INFLATION_ADMIN] == address(0), "Role transfer in progress.");
-
         roleHolder[INFLATION_BENEFICIARY] = address(0);
         emit RoleChangeCompleted(address(0), INFLATION_BENEFICIARY);
     }
@@ -150,6 +149,7 @@ contract KatToken is ERC20Permit {
         locked = false;
         roleHolder[UNLOCKER] = address(0);
         pendingRoleHolder[UNLOCKER] = address(0);
+        emit RoleChangeCompleted(address(0), UNLOCKER);
     }
 
     /**
@@ -160,6 +160,7 @@ contract KatToken is ERC20Permit {
     function renounceLockExemptionAdmin() external hasRole(LOCK_EXEMPTION_ADMIN) {
         roleHolder[LOCK_EXEMPTION_ADMIN] = address(0);
         pendingRoleHolder[LOCK_EXEMPTION_ADMIN] = address(0);
+        emit RoleChangeCompleted(address(0), LOCK_EXEMPTION_ADMIN);
     }
 
     /**
