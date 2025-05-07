@@ -53,21 +53,42 @@ contract InflationTest is Test, DeployScript {
         assertApproxEqAbsDecimal(token.cap(), 10_404_000_000 * decimals, 10 * decimals, 0);
     }
 
-    // function test_changed_Inflation2() public {
-    //     vm.startPrank(dummyInflationAdmin);
-    //     token.changeInflation(0);
-    //     assertEq(token.cap(), 10_000_000_000 * decimals);
-    //     warpYears(4);
-    //     assertEq(token.cap(), 10_000_000_000 * decimals);
-    //     warpYears(5);
-    //     assertApproxEqAbsDecimal(token.cap(), 10_000_000_000 * decimals, 10 * decimals, 0);
-    //     token.changeInflation(one_inflation);
-    //     warpYears(6);
-    //     assertApproxEqAbsDecimal(token.cap(), 10_100_000_000 * decimals, 10 * decimals, 0);
-    //     token.changeInflation(two_inflation);
-    //     warpYears(7);
-    //     assertApproxEqAbsDecimal(token.cap(), 10_302_000_000 * decimals, 10 * decimals, 0);
-    // }
+    function test_changed_Inflation2() public {
+        assertEq(token.totalSupply(), 0);
+        assertEq(token.cap(), 10_000_000_000 * decimals);
+
+        vm.prank(dummyDistributor);
+        token.mint(dummyDistributor, 10_000_000_000 * decimals);
+
+        vm.prank(dummyInflationAdmin);
+        token.changeInflation(three_inflation);
+        assertEq(token.cap(), 10_000_000_000 * decimals);
+        assertEq(token.totalSupply(), 10_000_000_000 * decimals);
+
+        warpYears(1);
+        assertApproxEqAbsDecimal(token.cap(), 10_300_000_000 * decimals, 10 * decimals, 0);
+        assertEq(token.totalSupply(), 10_000_000_000 * decimals);
+
+        warpYears(2);
+        assertApproxEqAbsDecimal(token.cap(), 10_609_000_000 * decimals, 10 * decimals, 0);
+        token.distributeInflation();
+        uint256 toBeMinted = token.mintCapacity(dummyInflationBen);
+        vm.prank(dummyInflationBen);
+        token.mint(dummyInflationAdmin, toBeMinted);
+        assertEq(token.totalSupply(), token.cap());
+
+        vm.prank(dummyInflationAdmin);
+        token.changeInflation(one_inflation);
+        warpYears(3);
+        // using 11 here should be fine as we want 10 token per year max off
+        assertApproxEqAbsDecimal(token.cap(), 10_715_090_000 * decimals, 11 * decimals, 0);
+
+        vm.prank(dummyInflationAdmin);
+        token.changeInflation(0);
+        warpYears(4);
+        // using 11 here should be fine as we want 10 token per year max off
+        assertApproxEqAbsDecimal(token.cap(), 10_715_090_000 * decimals, 11 * decimals, 0);
+    }
 
     function test_Inflation_access() public {
         vm.expectRevert("Not role holder.");
