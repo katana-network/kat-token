@@ -83,6 +83,25 @@ contract UnlockTest is Test, DeployScript {
         token.transfer(beatrice, 10);
     }
 
+    function test_locked_transferFrom() public {
+        vm.prank(dummyDistributor);
+        token.mint(dummyDistributor, 10);
+
+        vm.prank(dummyDistributor);
+        token.approve(alice, 10);
+
+        vm.prank(alice);
+        vm.expectRevert("Token locked.");
+        token.transferFrom(dummyDistributor, alice, 1);
+
+        vm.prank(dummyLockExemptionAdmin);
+        token.setLockExemption(alice);
+
+        vm.prank(alice);
+        vm.expectRevert("Token locked.");
+        token.transferFrom(dummyDistributor, alice, 1);
+    }
+
     function test_locked_transfer_bypass_admin() public {
         vm.prank(dummyDistributor);
         token.mint(alice, 100);
