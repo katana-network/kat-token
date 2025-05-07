@@ -261,8 +261,8 @@ contract KatToken is ERC20Permit {
             super._update(from, to, amount);
         }
         // Only allow transfer for lockExempted addresses
-        // transferFrom only works if both approver and spender are whitelisted
-        else if (lockExemption[from] && lockExemption[msg.sender]) {
+        // transferFrom is disallowed
+        else if (lockExemption[from] && from == msg.sender) {
             super._update(from, to, amount);
         } else if (from == address(0)) {
             super._update(from, to, amount);
