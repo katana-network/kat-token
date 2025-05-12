@@ -174,8 +174,8 @@ contract KatToken is ERC20Permit {
     /**
      * Adds (or removes) an address to allow it to transfer during the lock period
      */
-    function setLockExemption(address user) external hasRole(LOCK_EXEMPTION_ADMIN) {
-        lockExemption[user] = !lockExemption[user];
+    function setLockExemption(address user, bool value) external hasRole(LOCK_EXEMPTION_ADMIN) {
+        lockExemption[user] = value;
     }
 
     /**
