@@ -178,26 +178,6 @@ contract KatToken is ERC20Permit {
     }
 
     /**
-     * Mint within confines of mint capacity
-     * @param to Receiver of the newly minted tokens
-     * @param amount Amount to be minted
-     */
-    function mint(address to, uint256 amount) external {
-        require(mintCapacity[msg.sender] >= amount, "Not enough mint capacity.");
-        mintCapacity[msg.sender] -= amount;
-        _mint(to, amount);
-    }
-
-    /**
-     * Calculates the current total cap of the token.
-     * Already minted and not yet minted token amounts add up to this value
-     * @return The current total token cap
-     */
-    function cap() external view returns (uint256) {
-        return distributedSupplyCap + _calcInflation();
-    }
-
-    /**
      * Sets a new inflation factor starting immediately.
      * @dev Inflation until now will get distributed immediately using the old inflation factor
      * @dev only callable by the current INFLATION_ADMIN
@@ -209,6 +189,15 @@ contract KatToken is ERC20Permit {
         uint256 oldValue = inflationFactor;
         inflationFactor = value;
         emit InflationChanged(oldValue, value);
+    }
+
+    /**
+     * Calculates the current total cap of the token.
+     * Already minted and not yet minted token amounts add up to this value
+     * @return The current total token cap
+     */
+    function cap() external view returns (uint256) {
+        return distributedSupplyCap + _calcInflation();
     }
 
     /**
@@ -252,15 +241,26 @@ contract KatToken is ERC20Permit {
     }
 
     /**
+     * Mint within confines of mint capacity
+     * @param to Receiver of the newly minted tokens
+     * @param amount Amount to be minted
+     */
+    function mint(address to, uint256 amount) external {
+        require(mintCapacity[msg.sender] >= amount, "Not enough mint capacity.");
+        mintCapacity[msg.sender] -= amount;
+        _mint(to, amount);
+    }
+
+    /**
      * Override _update to check if lock is still in place
-     * Additionally check if user is allowed early transfers
+     * Additionally check if from is allowed early transfers
      */
     function _update(address from, address to, uint256 amount) internal override {
         if (block.timestamp > unlockTime || !locked) {
             super._update(from, to, amount);
         }
-        // Only allow transfer for lockExempted addresses
-        // transferFrom is disallowed
+        // Only allow transfer for lockExempted addresses during lock
+        // transferFrom is disallowed during lock
         else if (lockExemption[from] && from == msg.sender) {
             super._update(from, to, amount);
         } else if (from == address(0)) {
