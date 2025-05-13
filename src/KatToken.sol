@@ -167,7 +167,6 @@ contract KatToken is ERC20Permit {
      * Returns true if either the unlock time has passed or a manual unlock has occurred
      */
     function isUnlocked() public view returns (bool) {
-        // do a fail fast check on time first, then storage slot, this makes transfer cheap again after the time unlock
         return (block.timestamp > unlockTime) || !locked;
     }
 
@@ -257,7 +256,7 @@ contract KatToken is ERC20Permit {
      * Additionally check if user is allowed early transfers
      */
     function _update(address from, address to, uint256 amount) internal override {
-        if (isUnlocked()) {
+        if (block.timestamp > unlockTime || !locked) {
             super._update(from, to, amount);
         }
         // Only allow transfer for lockExempted addresses
