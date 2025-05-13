@@ -36,6 +36,25 @@ contract InflationTest is Test, DeployScript {
         assertApproxEqAbsDecimal(token.cap(), 10_000_000_000 * decimals, 10 * decimals, 0);
     }
 
+    function test_over_Max_Inflation() public {
+        vm.startPrank(dummyInflationAdmin);
+        uint256 max_inflation = token.MAX_INFLATION();
+        vm.expectRevert("Inflation too large.");
+        token.changeInflation(max_inflation + 1);
+
+        vm.expectRevert("Inflation too large.");
+        token.changeInflation(10000000000000000000000);
+    }
+
+    function test_Max_Inflation_expected_value() public {
+        vm.startPrank(dummyInflationAdmin);
+        uint256 max_inflation = token.MAX_INFLATION();
+        token.changeInflation(max_inflation);
+
+        warpYears(1);
+        assertApproxEqAbsDecimal(token.cap(), 133_700_000_000 * decimals, 20000 * decimals, 0);
+    }
+
     function test_start_Inflation() public {
         assertEq(token.cap(), 10_000_000_000 * decimals);
         vm.warp(1 days);
