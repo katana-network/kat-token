@@ -5,7 +5,7 @@ import {ERC20Permit, ERC20} from "dependencies/@openzeppelin-contracts-5.1.0/tok
 import {PowUtil} from "./Powutil.sol";
 
 /// @title Network token for the Katana chain
-/// @author @ethyla
+/// @author Polygon Labs (@ethyla)
 /// @notice Standard ERC20 with added initial locking and inflation mechanisms
 /// @dev Token is not upgradeable
 contract KatToken is ERC20Permit {
