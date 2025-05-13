@@ -5,50 +5,56 @@ import {ERC20Permit, ERC20} from "dependencies/@openzeppelin-contracts-5.1.0/tok
 import {PowUtil} from "./Powutil.sol";
 
 contract KatToken is ERC20Permit {
+    /// @dev Inflation has been send to the INFLATION_BENEFICIARY
     event InflationDistributed(address receiver, uint256 amount);
+    /// @dev Inflation factor has been changed
     event InflationChanged(uint256 oldValue, uint256 newValue);
+    /// @dev Mint capacity has been transferred, similar to transfer for token
     event MintCapacityDistributed(address sender, address receiver, uint256 amount);
+    /// @dev Role change has been initiated
     event RoleChangeStarted(address newHolder, bytes32 role);
+    /// @dev New role holder has accepted role, old holder got removed
     event RoleChangeCompleted(address newHolder, bytes32 role);
 
     // Roles
-    // This role can set the inflation percentage
+    /// This role can set the inflation percentage
     bytes32 public constant INFLATION_ADMIN = keccak256("INFLATION_ADMIN");
-    // Initial receiver of the inflated minting capacity, can distribute it away as needed
+    /// Receiver of the inflation in form of minting capacity, can distribute it away as needed
     bytes32 public constant INFLATION_BENEFICIARY = keccak256("INFLATION_BENEFICIARY");
-    // Can unlock the token early, no relocking
+    /// Can unlock the token early, no relocking
     bytes32 public constant UNLOCKER = keccak256("UNLOCKER");
-    // Can give and take the right to transfer during locking period
+    /// Can give and take the right to transfer during locking period
     bytes32 public constant LOCK_EXEMPTION_ADMIN = keccak256("LOCK_EXEMPTION_ADMIN");
 
-    // All current role holder
+    /// All current role holder
     mapping(bytes32 => address) public roleHolder;
-    // Potential new role holder, if they accept
+    /// Potential new role holder, if they accept
     mapping(bytes32 => address) public pendingRoleHolder;
 
     // Inflation
-    // Total token capacity after the last settlement
+    /// Total token capacity after the last settlement
     uint256 public distributedSupplyCap;
-    // Blocktime of last inflated mintCapacity distribution
+    /// Blocktime of last inflated mintCapacity distribution
     uint256 public lastMintCapacityIncrease;
-    // Inflation Factor
-    // Be careful when changing this, value needs to be set as the log of the expected inflation percentage
-    // Example: yearly inflation of 2% needs an inflationFactor of log(1.02) = 0.028569152196770894e18
-    // Don't forget the decimals, also take a look at the tests in Inflation.t.sol
+    /// Inflation Factor
+    /// @notice Be careful when changing this, value needs to be set as the log of the expected inflation percentage
+    /// @notice Example: yearly inflation of 2% needs an inflationFactor of log(1.02) = 0.028569152196770894e18
+    /// @notice Don't forget the decimals, also take a look at the tests in Inflation.t.sol
     uint256 public inflationFactor;
 
-    // Mint capacity distributed from inflation, also initial mint capacity
+    /// Mint capacity distributed from inflation, also initial mint capacity
     mapping(address => uint256) public mintCapacity;
 
     // Lock
-    // Time of the unlock, can't be changed, lock definitely opens after this
+    /// Time of the unlock, can't be changed, lock definitely opens after this
     uint256 public immutable unlockTime;
-    // Overrides unlockTime to allow early unlocking, can't be used to lock again, also not required for time based unlocking
+    /// Overrides unlockTime to allow early unlocking, can't be used to lock again, also not required for time based unlocking
     bool public locked = true;
 
-    // Addresses exempted from the lock, can transfer and transferFrom (only if both spender and from are exempted) during lock
+    /// Addresses exempted from the lock, can transfer and transferFrom (only if both spender and from are exempted) during lock
     mapping(address => bool) lockExemption;
 
+    /// Check the caller has a specific role
     modifier hasRole(bytes32 _role) {
         require(roleHolder[_role] == msg.sender, "Not role holder.");
         _;
@@ -98,28 +104,31 @@ contract KatToken is ERC20Permit {
 
     /**
      * Function to change the current holder of a role, can only be used by current role holder
-     * To finalize the change the new holder needs to call acceptRole()
+     * @notice To finalize the change the new holder needs to call acceptRole()
+     * @param newRoleOwner The the new role holder
+     * @param role The role being transferred
      */
-    function changeRoleHolder(address _newRoleOwner, bytes32 _role) external hasRole(_role) {
-        pendingRoleHolder[_role] = _newRoleOwner;
-        emit RoleChangeStarted(_newRoleOwner, _role);
+    function changeRoleHolder(address newRoleOwner, bytes32 role) external hasRole(role) {
+        pendingRoleHolder[role] = newRoleOwner;
+        emit RoleChangeStarted(newRoleOwner, role);
     }
 
     /**
      * Function to accept a role holder change proposal
-     * Only the pending role holder can accept
+     * @notice Only the pending role holder can accept
+     * @param role The role being accepted
      */
-    function acceptRole(bytes32 _role) external {
-        require(pendingRoleHolder[_role] == msg.sender, "Not new role holder.");
-        roleHolder[_role] = pendingRoleHolder[_role];
-        pendingRoleHolder[_role] = address(0);
-        emit RoleChangeCompleted(roleHolder[_role], _role);
+    function acceptRole(bytes32 role) external {
+        require(pendingRoleHolder[role] == msg.sender, "Not new role holder.");
+        roleHolder[role] = pendingRoleHolder[role];
+        pendingRoleHolder[role] = address(0);
+        emit RoleChangeCompleted(roleHolder[role], role);
     }
 
     /**
      * Function to renounce the inflationAdmin role
-     * This can't be reverted
-     * Inflation can be not 0 and INFLATION_BENEFICIARY can still be changed
+     * @notice This can't be reverted
+     * @notice Inflation can be higher than 0 and INFLATION_BENEFICIARY can still be changed
      */
     function renounceInflationAdmin() external hasRole(INFLATION_ADMIN) {
         require(pendingRoleHolder[INFLATION_ADMIN] == address(0), "Role transfer in progress.");
@@ -129,8 +138,8 @@ contract KatToken is ERC20Permit {
 
     /**
      * Function to renounce the inflationBeneficiary role
-     * This can't be reverted
-     * Can only happen once inflation is 0 and INFLATION_ADMIN is renounced
+     * @notice This can't be reverted
+     * @notice Can only happen once inflation is 0 and INFLATION_ADMIN is renounced
      */
     function renounceInflationBeneficiary() external hasRole(INFLATION_BENEFICIARY) {
         require(pendingRoleHolder[INFLATION_BENEFICIARY] == address(0), "Role transfer in progress.");
@@ -143,7 +152,7 @@ contract KatToken is ERC20Permit {
 
     /**
      * Unlocks the claim function early, afterwards contract can't be locked again
-     * Can be used after unlock to clean unlocker variable
+     * @dev Can be used after unlock to clean unlocker variable
      */
     function unlockAndRenounceUnlocker() external hasRole(UNLOCKER) {
         locked = false;
@@ -154,8 +163,8 @@ contract KatToken is ERC20Permit {
 
     /**
      * Renounces the LOCK_EXEMPTION_ADMIN
-     * Can be used after unlock to clean LOCK_EXEMPTION_ADMIN variable
-     * For full cleaning lockExemption needs to be manually emptied
+     * @dev Can be used after unlock to clean LOCK_EXEMPTION_ADMIN variable
+     * @dev For full cleaning lockExemption needs to be manually emptied
      */
     function renounceLockExemptionAdmin() external hasRole(LOCK_EXEMPTION_ADMIN) {
         roleHolder[LOCK_EXEMPTION_ADMIN] = address(0);
@@ -164,7 +173,8 @@ contract KatToken is ERC20Permit {
     }
 
     /**
-     * Returns true if either the unlock time has passed or a manual unlock has occurred
+     * Check whether token is unlocked and freely transferable
+     * @return true if either the unlock time has passed or a manual unlock has occurred
      */
     function isUnlocked() public view returns (bool) {
         return (block.timestamp > unlockTime) || !locked;
@@ -172,6 +182,8 @@ contract KatToken is ERC20Permit {
 
     /**
      * Adds (or removes) an address to allow it to transfer during the lock period
+     * @param user The address whose permission is being changed
+     * @param value The new permission status
      */
     function setLockExemption(address user, bool value) external hasRole(LOCK_EXEMPTION_ADMIN) {
         lockExemption[user] = value;
@@ -179,8 +191,8 @@ contract KatToken is ERC20Permit {
 
     /**
      * Sets a new inflation factor starting immediately.
+     * @notice Has to be in the format log(1.xx) with xx being the yearly inflation in percent
      * @dev Inflation until now will get distributed immediately using the old inflation factor
-     * @dev only callable by the current INFLATION_ADMIN
      * @param value The new inflation factor
      */
     function changeInflation(uint256 value) external hasRole(INFLATION_ADMIN) {
@@ -193,7 +205,7 @@ contract KatToken is ERC20Permit {
 
     /**
      * Calculates the current total cap of the token.
-     * Already minted and not yet minted token amounts add up to this value
+     * @notice Already minted and not yet minted token amounts add up to this value
      * @return The current total token cap
      */
     function cap() external view returns (uint256) {
@@ -205,7 +217,6 @@ contract KatToken is ERC20Permit {
      * @return The unrealized inflation since the last realization
      */
     function _calcInflation() internal view returns (uint256) {
-        // Only used if inflation was distributed in same block, worth it?
         if (lastMintCapacityIncrease == block.timestamp) {
             return 0;
         }
@@ -230,7 +241,7 @@ contract KatToken is ERC20Permit {
     /**
      * Distributes mint capacity to a minter
      * @param to Receiver of the mint capacity
-     * @param amount Amount to be added as mint capacity
+     * @param amount Amount to be transferred as mint capacity
      */
     function distributeMintCapacity(address to, uint256 amount) external {
         require(to != address(0), "Sending to 0 address");
@@ -253,7 +264,8 @@ contract KatToken is ERC20Permit {
 
     /**
      * Override _update to check if lock is still in place
-     * Additionally check if from is allowed early transfers
+     * Additionally check if `from` is allowed early transfers
+     * @inheritdoc ERC20
      */
     function _update(address from, address to, uint256 amount) internal override {
         if (block.timestamp > unlockTime || !locked) {
