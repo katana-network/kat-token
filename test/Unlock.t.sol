@@ -95,7 +95,7 @@ contract UnlockTest is Test, DeployScript {
         token.transferFrom(dummyDistributor, alice, 1);
 
         vm.prank(dummyLockExemptionAdmin);
-        token.setLockExemption(alice);
+        token.setLockExemption(alice, true);
 
         vm.prank(alice);
         vm.expectRevert("Token locked.");
@@ -111,7 +111,7 @@ contract UnlockTest is Test, DeployScript {
         token.transfer(beatrice, 10);
 
         vm.prank(dummyLockExemptionAdmin);
-        token.setLockExemption(alice);
+        token.setLockExemption(alice, true);
 
         vm.prank(alice);
         token.transfer(beatrice, 10);
@@ -130,13 +130,13 @@ contract UnlockTest is Test, DeployScript {
         token.transfer(beatrice, 10);
 
         vm.prank(dummyLockExemptionAdmin);
-        token.setLockExemption(alice);
+        token.setLockExemption(alice, true);
 
         vm.prank(alice);
         token.transfer(beatrice, 10);
 
         vm.prank(dummyLockExemptionAdmin);
-        token.setLockExemption(alice);
+        token.setLockExemption(alice, false);
 
         vm.prank(alice);
         vm.expectRevert("Token locked.");
