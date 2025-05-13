@@ -37,10 +37,14 @@ contract KatToken is ERC20Permit {
     /// Blocktime of last inflated mintCapacity distribution
     uint256 public lastMintCapacityIncrease;
     /// Inflation Factor
-    /// @notice Be careful when changing this, value needs to be set as the log of the expected inflation percentage
-    /// @notice Example: yearly inflation of 2% needs an inflationFactor of log(1.02) = 0.028569152196770894e18
+    /// @notice Be careful when changing this, value needs to be set as the log2 of the expected inflation percentage
+    /// @notice Example: yearly inflation of 2% needs an inflationFactor of log2(1.02) = 0.028569152196770894e18
     /// @notice Don't forget the decimals, also take a look at the tests in Inflation.t.sol
     uint256 public inflationFactor;
+
+    /// Maximum configurable inflation (1337% annually)
+    /// @dev Added as a security measure against hostile INFLATION_ADMIN takeover
+    uint256 public constant MAX_INFLATION = 3.7409275603186281e18; // log2(13.37)
 
     /// Mint capacity distributed from inflation, also initial mint capacity
     mapping(address => uint256) public mintCapacity;
@@ -191,12 +195,13 @@ contract KatToken is ERC20Permit {
 
     /**
      * Sets a new inflation factor starting immediately.
-     * @notice Has to be in the format log(1.xx) with xx being the yearly inflation in percent
+     * @notice Has to be in the format log2(1.xx) with xx being the yearly inflation in percent
      * @dev Inflation until now will get distributed immediately using the old inflation factor
      * @param value The new inflation factor
      */
     function changeInflation(uint256 value) external hasRole(INFLATION_ADMIN) {
         require(roleHolder[INFLATION_BENEFICIARY] != address(0), "No inflation beneficiary.");
+        require(value <= MAX_INFLATION, "Inflation too large.");
         distributeInflation();
         uint256 oldValue = inflationFactor;
         inflationFactor = value;
