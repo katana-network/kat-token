@@ -1,9 +1,13 @@
-// SPDX-License-Identifier: SEE LICENSE IN LICENSE
+// SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.28;
 
 import {ERC20Permit, ERC20} from "dependencies/@openzeppelin-contracts-5.1.0/token/ERC20/extensions/ERC20Permit.sol";
 import {PowUtil} from "./Powutil.sol";
 
+/// @title Network token for the Katana chain
+/// @author @ethyla
+/// @notice Standard ERC20 with added initial locking and inflation mechanisms
+/// @dev Token is not upgradeable
 contract KatToken is ERC20Permit {
     /// @dev Inflation has been send to the INFLATION_BENEFICIARY
     event InflationDistributed(address receiver, uint256 amount);
