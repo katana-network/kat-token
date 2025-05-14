@@ -194,6 +194,15 @@ contract KatTokenTest is Test, DeployScript {
         assertEq(token.roleHolder(INFLATION_BENEFICIARY), address(0));
     }
 
+    function test_transfer_cost() public {
+        vm.prank(dummyDistributor);
+        token.mint(alice, 10);
+        vm.warp(dummyUnlockTime + 1);
+
+        vm.prank(alice);
+        token.transfer(beatrice, 10);
+    }
+
     function test_full_scenario() public {
         address receiver1 = makeAddr("receiver1");
         address receiver2 = makeAddr("receiver2");
@@ -239,7 +248,7 @@ contract KatTokenTest is Test, DeployScript {
         katToken.transfer(receiver4, 500_000_000 * digits);
 
         vm.prank(dummyLockExemptionAdmin);
-        katToken.setLockExemption(receiver3);
+        katToken.setLockExemption(receiver3, true);
         vm.prank(receiver3);
         katToken.transfer(receiver4, 500_000_000 * digits);
 
@@ -268,13 +277,13 @@ contract KatTokenTest is Test, DeployScript {
         katToken.transfer(alice, 1);
 
         vm.prank(dummyLockExemptionAdmin);
-        katToken.setLockExemption(receiver1);
+        katToken.setLockExemption(receiver1, true);
 
         vm.prank(receiver1);
         katToken.transfer(alice, 1);
 
         vm.prank(dummyLockExemptionAdmin);
-        katToken.setLockExemption(receiver1);
+        katToken.setLockExemption(receiver1, false);
 
         vm.prank(receiver1);
         vm.expectRevert("Token locked.");
