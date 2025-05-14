@@ -9,7 +9,7 @@ import {PowUtil} from "./Powutil.sol";
 /// @notice Standard ERC20 with added initial locking and inflation mechanisms
 /// @dev Token is not upgradeable
 contract KatToken is ERC20Permit {
-    /// @dev Inflation has been send to the INFLATION_BENEFICIARY
+    /// @dev Inflation has been sent to the INFLATION_BENEFICIARY
     event InflationDistributed(address receiver, uint256 amount);
     /// @dev Inflation factor has been changed
     event InflationChanged(uint256 oldValue, uint256 newValue);
@@ -40,7 +40,7 @@ contract KatToken is ERC20Permit {
     uint256 public distributedSupplyCap;
     /// Blocktime of last inflated mintCapacity distribution
     uint256 public lastMintCapacityIncrease;
-    /// Inflation Factor
+    // Inflation Factor
     /// @notice Be careful when changing this, value needs to be set as the log2 of the expected inflation percentage
     /// @notice Example: yearly inflation of 2% needs an inflationFactor of log2(1.02) = 0.028569152196770894e18
     /// @notice Don't forget the decimals, also take a look at the tests in Inflation.t.sol
@@ -61,12 +61,6 @@ contract KatToken is ERC20Permit {
 
     /// Addresses exempted from the lock, can transfer and transferFrom (only if both spender and from are exempted) during lock
     mapping(address => bool) lockExemption;
-
-    /// Check the caller has a specific role
-    modifier hasRole(bytes32 _role) {
-        require(roleHolder[_role] == msg.sender, "Not role holder.");
-        _;
-    }
 
     constructor(
         string memory _name,
@@ -108,6 +102,15 @@ contract KatToken is ERC20Permit {
         unlockTime = _unlockTime;
         // Allow transfers for initial token distributor
         lockExemption[_distributor] = true;
+    }
+
+    /**
+     * Check the caller has a specific role
+     * @param role The role the caller has to hold
+     */
+    modifier hasRole(bytes32 role) {
+        require(roleHolder[role] == msg.sender, "Not role holder.");
+        _;
     }
 
     /**
