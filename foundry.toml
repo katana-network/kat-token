@@ -4,10 +4,6 @@ out = "out"
 libs = ["dependencies"]
 optimizer = true
 
-# Required so tests use correct deployment
-always_use_create_2_factory=true
-ffi = true
-
 [fmt]
 multiline_func_header = "params_first_multi"
 
@@ -18,9 +14,9 @@ forge-std = "1.9.4"
 
 [rpc_endpoints]
 anvil = "http://127.0.0.1:8545"
-polygon_mainnet = "https://mainnet.infura.io/v3/${INFURA_TOKEN}"
-polygon_testnet = "https://mainnet.infura.io/v3/${INFURA_TOKEN}"
+katana_mainnet = ""
+katana_testnet = ""
 
 [etherscan]
-polygon_mainnet = { key = "${ETHERSCAN_API_KEY}" }
-polygon_testnet = { key = "${ETHERSCAN_API_KEY}" }
+katana_mainnet = { key = "${ETHERSCAN_API_KEY}" }
+katana_testnet = { key = "${ETHERSCAN_API_KEY}" }

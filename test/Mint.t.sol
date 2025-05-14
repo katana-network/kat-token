@@ -9,12 +9,16 @@ contract MintTest is Test, DeployScript {
     KatToken token;
     address alice = makeAddr("alice");
     address beatrice = makeAddr("beatrice");
+    uint256 two_inflation = 0.028569152196770894e18;
 
     function setUp() public {
         token = deployDummyToken();
     }
 
     function test_mint_distribution() public {
+        warpYears(4);
+        vm.prank(dummyInflationAdmin);
+        token.changeInflation(two_inflation);
         warpYears(5);
         token.distributeInflation();
         uint256 originalCapacity = token.mintCapacity(dummyInflationBen);
@@ -49,27 +53,27 @@ contract MintTest is Test, DeployScript {
         token.distributeMintCapacity(address(0), originalCapacity);
     }
 
-    function test_mintTo() public {
-        uint256 allCapacity = token.mintCapacity(dummyMerkleMinter);
-        vm.prank(dummyMerkleMinter);
-        token.mintTo(alice, allCapacity / 2);
+    function test_mint() public {
+        uint256 allCapacity = token.mintCapacity(dummyDistributor);
+        vm.prank(dummyDistributor);
+        token.mint(alice, allCapacity / 2);
         assertEq(token.balanceOf(alice), allCapacity / 2);
-        assertEq(token.mintCapacity(dummyMerkleMinter), allCapacity / 2);
+        assertEq(token.mintCapacity(dummyDistributor), allCapacity / 2);
 
-        vm.prank(dummyMerkleMinter);
-        token.mintTo(beatrice, allCapacity / 4);
+        vm.prank(dummyDistributor);
+        token.mint(beatrice, allCapacity / 4);
         assertEq(token.balanceOf(beatrice), allCapacity * 1 / 4);
-        assertEq(token.mintCapacity(dummyMerkleMinter), allCapacity * 1 / 4);
+        assertEq(token.mintCapacity(dummyDistributor), allCapacity * 1 / 4);
     }
 
-    function test_mintTo_fail() public {
+    function test_mint_fail() public {
         vm.prank(alice);
         vm.expectRevert("Not enough mint capacity.");
-        token.mintTo(beatrice, 10);
-        uint256 allCapacity = token.mintCapacity(dummyMerkleMinter);
-        vm.prank(dummyMerkleMinter);
+        token.mint(beatrice, 10);
+        uint256 allCapacity = token.mintCapacity(dummyDistributor);
+        vm.prank(dummyDistributor);
         vm.expectRevert("Not enough mint capacity.");
-        token.mintTo(beatrice, allCapacity + 1);
+        token.mint(beatrice, allCapacity + 1);
     }
 
     function warpYears(uint256 amount) internal {
