@@ -2,6 +2,17 @@
 
 Native token of the Katana Network Chain.
 
+## Engineering Documentation
+
+For comprehensive engineering documentation, cross-repo context, troubleshooting guides, and deployment procedures, see the [Katana Engineering Lore](https://github.com/katana-network/team-docs) repository.
+
+This central documentation hub includes:
+- Repository overviews and tech stacks
+- Cross-repo dependencies and data flows
+- Common gotchas and troubleshooting guides
+- Environment setup and API contracts
+- Deployment procedures and infrastructure details
+
 ### Features
 
 - standard ERC20
