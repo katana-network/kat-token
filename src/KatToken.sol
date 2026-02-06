@@ -19,6 +19,9 @@ contract KatToken is ERC20Permit {
     event RoleChangeStarted(address newHolder, bytes32 role);
     /// @dev New role holder has accepted role, old holder got removed
     event RoleChangeCompleted(address newHolder, bytes32 role);
+    /// @dev New Unlocktime has been set
+    event Unlocked(uint256 previousUnlockTime, uint256 newUnlockTime);
+    
 
     // Roles
     /// This role can set the inflation percentage
@@ -53,14 +56,15 @@ contract KatToken is ERC20Permit {
     /// Mint capacity distributed from inflation, also initial mint capacity
     mapping(address => uint256) public mintCapacity;
 
-    // Lock
-    /// Time of the unlock, can't be changed, lock definitely opens after this
-    uint256 public immutable unlockTime;
     /// Overrides unlockTime to allow early unlocking, can't be used to lock again, also not required for time based unlocking
     bool public locked = true;
 
     /// Addresses exempted from the lock, can transfer and transferFrom (only if both spender and from are exempted) during lock
-    mapping(address => bool) lockExemption;
+    mapping(address => bool) public lockExemption;
+
+    // Lock
+    /// Time of the unlock
+    uint256 public unlockTime;
 
     constructor(
         string memory _name,
@@ -111,6 +115,23 @@ contract KatToken is ERC20Permit {
     modifier hasRole(bytes32 role) {
         require(roleHolder[role] == msg.sender, "Not role holder.");
         _;
+    }
+
+    /**
+     * Set unlockTime to a specific value, can be used to unlock early or set a new unlock time in the future, can't be used to lock again
+     * @dev Can be used after unlock to clean unlocker variable
+     */
+    function setUnlockTime(uint256 newUnlockTime) external hasRole(UNLOCKER) {
+        uint256 currentUnlockTime = unlockTime;
+
+        require(newUnlockTime > block.timestamp, "Unlock time must be in the future.");
+
+        if (currentUnlockTime != 0) {
+            require(currentUnlockTime > block.timestamp && locked, "Already unlocked, can't set new unlock time.");
+        }
+
+        unlockTime = newUnlockTime;
+        emit Unlocked(currentUnlockTime, newUnlockTime);
     }
 
     /**
@@ -188,7 +209,7 @@ contract KatToken is ERC20Permit {
      * @return true if either the unlock time has passed or a manual unlock has occurred
      */
     function isUnlocked() public view returns (bool) {
-        return (block.timestamp > unlockTime) || !locked;
+        return ((unlockTime != 0 && block.timestamp > unlockTime) || !locked);
     }
 
     /**
@@ -280,7 +301,7 @@ contract KatToken is ERC20Permit {
      * @inheritdoc ERC20
      */
     function _update(address from, address to, uint256 amount) internal override {
-        if (block.timestamp > unlockTime || !locked) {
+        if (isUnlocked()) {
             super._update(from, to, amount);
         }
         // Only allow transfer for lockExempted addresses during lock

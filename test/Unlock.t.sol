@@ -12,11 +12,15 @@ contract UnlockTest is Test, DeployScript {
     bytes32 UNLOCKER;
     bytes32 LOCK_EXEMPTION_ADMIN;
 
+    address unlockerAdmin;
+
     function setUp() public {
         token = deployDummyToken();
 
         UNLOCKER = token.UNLOCKER();
         LOCK_EXEMPTION_ADMIN = token.LOCK_EXEMPTION_ADMIN();
+        unlockerAdmin = token.roleHolder(UNLOCKER);
+
     }
 
     function test_locked() public {
@@ -141,5 +145,55 @@ contract UnlockTest is Test, DeployScript {
         vm.prank(alice);
         vm.expectRevert("Token locked.");
         token.transfer(beatrice, 10);
+    }
+
+    function test_change_unlock_time() public {
+        uint256 currentUnlockTime = token.unlockTime();
+
+        vm.prank(unlockerAdmin);
+        vm.expectRevert("Unlock time must be in the future.");
+        token.setUnlockTime(block.timestamp - 1);
+
+        uint256 newUnlockTime = block.timestamp + 100000;
+        vm.prank(unlockerAdmin);    
+        token.setUnlockTime(newUnlockTime);
+
+        currentUnlockTime = token.unlockTime();
+        assertEq(currentUnlockTime, newUnlockTime);
+
+        vm.expectRevert("Not role holder.");
+        token.setUnlockTime(newUnlockTime);
+
+        vm.warp(newUnlockTime + 1);
+        vm.prank(unlockerAdmin);
+        vm.expectRevert("Already unlocked, can't set new unlock time.");
+        token.setUnlockTime(block.timestamp + 1);
+
+    }
+
+    function test_change_unlock_time_when_unlock_time_equal_to_zero() public {
+        // setting unlocTime variable to 0
+        vm.store(address(token), bytes32(uint256(16)), bytes32(uint256(0)));
+
+        uint256 currentUnlockTime = token.unlockTime();
+        assertEq(currentUnlockTime, 0);
+
+        uint256 newUnlockTime = block.timestamp + 100000;
+        vm.prank(unlockerAdmin);
+        token.setUnlockTime(newUnlockTime);
+
+        currentUnlockTime = token.unlockTime();
+        assertEq(currentUnlockTime, newUnlockTime);
+
+        // can't set new unlock time to 0
+        vm.prank(unlockerAdmin);
+        vm.expectRevert("Unlock time must be in the future.");
+        token.setUnlockTime(0);
+        
+        // setting locked variable to false
+        vm.store(address(token), bytes32(uint256(14)), bytes32(uint256(0)));
+        vm.prank(unlockerAdmin);
+        vm.expectRevert("Already unlocked, can't set new unlock time.");
+        token.setUnlockTime(block.timestamp + 1);
     }
 }
